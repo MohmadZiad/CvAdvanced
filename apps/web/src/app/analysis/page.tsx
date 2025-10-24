@@ -35,50 +35,51 @@ export default function RunAnalysis() {
   };
 
   return (
-    <div className="mx-auto max-w-xl p-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">تشغيل التحليل</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          اختر سيرة ذاتية ووظيفة للمطابقة والحصول على النتيجة التفصيلية.
+    <div className="mx-auto max-w-2xl space-y-6">
+      <header className="relative overflow-hidden rounded-[2rem] border border-border/40 bg-white/75 px-6 py-8 shadow-soft backdrop-blur dark:bg-white/10">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(55%_120%_at_0%_0%,rgba(37,99,235,0.18),transparent),radial-gradient(45%_110%_at_100%_100%,rgba(139,92,246,0.16),transparent)]" />
+        <p className="text-xs uppercase tracking-[0.32em] text-foreground/50">Orchestrate Analysis</p>
+        <h1 className="mt-3 text-3xl font-semibold text-foreground">تشغيل التحليل</h1>
+        <p className="mt-2 max-w-xl text-sm text-foreground/60">
+          اختر سيرة ذاتية ووظيفة للمطابقة والحصول على النتيجة التفصيلية. الواجهة تحافظ على نفس التدفق، لكن بتجربة متطورة وحديثة.
         </p>
       </header>
 
       {err && (
-        <div className="mb-4 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-destructive">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-destructive shadow-sm">
           {err}
         </div>
       )}
 
-      <div className="rounded-xl border p-4">
-        <div className="grid gap-4">
+      <div className="rounded-[2rem] border border-border/40 bg-white/80 p-6 shadow-soft backdrop-blur dark:bg-white/10">
+        <div className="grid gap-5">
           <div className="grid gap-2">
-            <label className="text-sm font-medium">CV</label>
+            <label className="text-xs uppercase tracking-[0.28em] text-foreground/50">CV</label>
             <select
               value={cvId}
               onChange={(e) => setCvId(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-2xl border border-border/60 bg-white/95 px-4 py-3 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
             >
               <option value="">— اختر CV —</option>
               {cvs.map((c: any) => (
                 <option key={c.id} value={c.id}>
-                  {c.id.slice(0, 8)}…
+                  {c.originalFilename || c.id.slice(0, 10)}
                 </option>
               ))}
             </select>
             {cvs.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                لا توجد سير — ارفع من صفحة{" "}
-                <span className="font-semibold">رفع السيرة الذاتية</span>.
+              <p className="text-xs text-foreground/50">
+                لا توجد سير — ارفع من صفحة <span className="font-semibold text-foreground">رفع السيرة الذاتية</span>.
               </p>
             )}
           </div>
 
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Job</label>
+            <label className="text-xs uppercase tracking-[0.28em] text-foreground/50">Job</label>
             <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-2xl border border-border/60 bg-white/95 px-4 py-3 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
             >
               <option value="">— اختر وظيفة —</option>
               {jobs.map((j: any) => (
@@ -88,15 +89,19 @@ export default function RunAnalysis() {
               ))}
             </select>
             {jobs.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                لا توجد وظائف — أنشئ واحدة من صفحة{" "}
-                <span className="font-semibold">وظيفة جديدة</span>.
+              <p className="text-xs text-foreground/50">
+                لا توجد وظائف — أنشئ واحدة من صفحة <span className="font-semibold text-foreground">وظيفة جديدة</span>.
               </p>
             )}
           </div>
 
+          <div className="flex items-center justify-between rounded-2xl border border-border/40 bg-white/80 px-4 py-3 text-xs uppercase tracking-[0.3em] text-foreground/50 dark:bg-white/5">
+            <span>متطلبات كاملة • لا تغيير في المنطق</span>
+            <span>⚡ 10 ثواني تقريبًا</span>
+          </div>
+
           <div className="pt-2">
-            <Button onClick={run} disabled={!cvId || !jobId} loading={loading}>
+            <Button onClick={run} disabled={!cvId || !jobId} loading={loading} className="w-full justify-center gap-2">
               حلّل الآن
             </Button>
           </div>

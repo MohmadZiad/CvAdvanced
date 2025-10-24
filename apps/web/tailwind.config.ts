@@ -10,8 +10,17 @@ export default {
     "../**/src/**/*.{ts,tsx,mdx}",
   ],
   theme: {
-    container: { center: true, padding: "1rem", screens: { "2xl": "1400px" } },
+    container: {
+      center: true,
+      padding: "1.5rem",
+      screens: { "2xl": "1280px" },
+    },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "General Sans Variable", "Inter Variable", "sans-serif"],
+        display: ["var(--font-display)", "General Sans Variable", "Inter Variable", "sans-serif"],
+        mono: ["var(--font-mono)", "Geist Mono", "ui-monospace"],
+      },
       colors: {
         border: "rgb(var(--border) / <alpha-value>)",
         input: "rgb(var(--input) / <alpha-value>)",
@@ -38,27 +47,45 @@ export default {
           DEFAULT: "rgb(var(--accent) / <alpha-value>)",
           foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
         },
-        popover: {
-          DEFAULT: "rgb(var(--popover) / <alpha-value>)",
-          foreground: "rgb(var(--popover-foreground) / <alpha-value>)",
-        },
+        info: "rgb(var(--info) / <alpha-value>)",
+        success: "rgb(var(--success) / <alpha-value>)",
+        warning: "rgb(var(--warning) / <alpha-value>)",
         card: {
-          DEFAULT: "rgb(var(--card) / <alpha-value>)",
-          foreground: "rgb(var(--card-foreground) / <alpha-value>)",
+          DEFAULT: "rgb(var(--base) / <alpha-value>)",
+          foreground: "rgb(var(--base-foreground) / <alpha-value>)",
         },
       },
-      borderRadius: { xl: "0.75rem", "2xl": "1rem" },
+      borderRadius: {
+        lg: "var(--radius-lg)",
+        md: "var(--radius-md)",
+        sm: "var(--radius-sm)",
+      },
       boxShadow: {
-        soft: "0 8px 30px rgb(0 0 0 / 0.06)",
-        card: "0 10px 25px -5px rgb(0 0 0 / 0.08)",
+        soft: "var(--shadow-soft)",
+        ring: "var(--shadow-ring)",
+      },
+      backgroundImage: {
+        "blurred-gradient":
+          "radial-gradient(circle at 20% 20%, rgba(37,99,235,.18), transparent 55%), radial-gradient(circle at 80% 0%, rgba(139,92,246,.14), transparent 58%)",
       },
       keyframes: {
-        floaty: { "0%": { transform: "translateY(0)" }, "100%": { transform: "translateY(-6px)" } },
-        "in-up": { "0%": { opacity: 0, transform: "translateY(8px)" }, "100%": { opacity: 1, transform: "translateY(0)" } },
+        floaty: {
+          "0%": { transform: "translateY(0px)" },
+          "100%": { transform: "translateY(-8px)" },
+        },
+        pulseGlow: {
+          "0%, 100%": { opacity: 0.65 },
+          "50%": { opacity: 1 },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-1.5deg)" },
+          "50%": { transform: "rotate(1.5deg)" },
+        },
       },
       animation: {
-        floaty: "floaty 2s ease-in-out infinite alternate",
-        "in-up": "in-up 300ms ease-out",
+        floaty: "floaty 3s ease-in-out infinite alternate",
+        glow: "pulseGlow 5s ease-in-out infinite",
+        wiggle: "wiggle 6s ease-in-out infinite",
       },
     },
   },
