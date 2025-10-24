@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { cvApi, type CV, buildPublicUrl } from "@/services/api/cv";
+import { Button } from "@/components/ui/Button";
 
 export default function CVList() {
   const [items, setItems] = React.useState<CV[]>([]);
@@ -15,42 +16,53 @@ export default function CVList() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
-        قائمة السير الذاتية
-      </h1>
+    <div className="container mx-auto max-w-4xl px-4 py-8">
+      <h1 className="mb-6 text-xl font-bold">قائمة السير الذاتية</h1>
+
       {loading ? (
-        "Loading…"
+        <div className="rounded-xl border p-6 text-center">Loading…</div>
+      ) : items.length === 0 ? (
+        <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          لا توجد ملفات بعد. ارفع أول CV من صفحة الرفع.
+        </div>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <ul className="divide-y rounded-2xl border bg-white/50 shadow-sm backdrop-blur">
           {items.map((i) => {
             const publicUrl = buildPublicUrl(i);
             const created = i.createdAt
               ? new Date(i.createdAt).toLocaleString()
               : "—";
             return (
-              <li
-                key={i.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "10px 0",
-                  borderBottom: "1px solid #eee",
-                }}
-              >
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontWeight: 600 }}>{i.id.slice(0, 8)}…</span>
-                  <span style={{ opacity: 0.8 }}>{i.originalFilename}</span>
+              <li key={i.id} className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold">{i.id.slice(0, 8)}…</span>
+                  <span className="text-sm text-muted-foreground">
+                    {i.originalFilename || "بدون اسم"}
+                  </span>
                 </div>
 
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div className="flex items-center gap-3">
                   {publicUrl && (
-                    <a href={publicUrl} target="_blank" rel="noreferrer">
-                      عرض
+                    <a
+                      href={publicUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm underline"
+                    >
+                      عرض الملف
                     </a>
                   )}
-                  <span style={{ fontSize: 12, color: "#777" }}>{created}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {created}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      navigator.clipboard.writeText(i.id).catch(() => {});
+                    }}
+                  >
+                    نسخ المعرّف
+                  </Button>
                 </div>
               </li>
             );

@@ -1,60 +1,160 @@
-'use client';
-import * as React from 'react';
-import { jobsApi, type JobRequirement } from '@/services/api/jobs';
-import { Input } from '@/components/ui/Input';
-import { TextArea } from '@/components/ui/TextArea';
-import { Button } from '@/components/ui/Button';
+"use client";
+import * as React from "react";
+import { jobsApi, type JobRequirement } from "@/services/api/jobs";
+import { Input } from "@/components/ui/Input";
+import { TextArea } from "@/components/ui/TextArea";
+import { Button } from "@/components/ui/Button";
 
 export default function NewJob() {
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
   const [reqs, setReqs] = React.useState<JobRequirement[]>([]);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  const addReq = () => setReqs(r => [...r, { requirement: '', mustHave: true, weight: 1 }]);
-  const updateReq = (idx: number, patch: Partial<JobRequirement>) => setReqs(r => r.map((it,i) => i===idx? { ...it, ...patch } : it));
-  const removeReq = (idx: number) => setReqs(r => r.filter((_,i)=>i!==idx));
+  const addReq = () =>
+    setReqs((r) => [...r, { requirement: "", mustHave: true, weight: 1 }]);
+
+  const updateReq = (idx: number, patch: Partial<JobRequirement>) =>
+    setReqs((r) => r.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+
+  const removeReq = (idx: number) =>
+    setReqs((r) => r.filter((_, i) => i !== idx));
 
   const onSubmit = async () => {
     try {
-      const job = await jobsApi.create({ title, description, requirements: reqs });
-      window.location.href = `/analysis/run`; // أو انتقل لتفاصيل الوظيفة لو وفّرت صفحة لها
+      setSubmitting(true);
+      await jobsApi.create({ title, description, requirements: reqs });
+      window.location.href = `/analysis/run`;
     } catch (e: any) {
-      alert(e.message || 'Failed');
+      alert(e?.message || "Failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>وظيفة جديدة</h1>
-      <div style={{ marginBottom: 8 }}>
-        <Input placeholder="العنوان" value={title} onChange={e => setTitle(e.target.value)} />
-      </div>
-      <div style={{ marginBottom: 8 }}>
-        <TextArea placeholder="الوصف" rows={6} value={description} onChange={e => setDescription(e.target.value)} />
-      </div>
+    <div className="container mx-auto max-w-3xl px-4 py-8">
+      <header className="mb-6 flex items-center justify-between">
+        <h1 className="text-xl font-bold">وظيفة جديدة</h1>
+        <div className="text-sm text-muted-foreground">
+          كل الحقول اختيارية ما عدا العنوان والوصف
+        </div>
+      </header>
 
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop: 8, marginBottom: 8 }}>
-        <h2 style={{ fontWeight: 600 }}>المتطلبات</h2>
-        <Button onClick={addReq}>+ إضافة</Button>
-      </div>
+      <section className="space-y-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold" htmlFor="job-title">
+            العنوان
+          </label>
+          <Input
+            id="job-title"
+            placeholder="مثال: Senior React Engineer"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
 
-      <div style={{ display:'grid', gap: 8 }}>
-        {reqs.map((r, idx) => (
-          <div key={idx} style={{ border:'1px solid #ddd', borderRadius:8, padding:8 }}>
-            <div style={{ marginBottom: 6 }}>
-              <Input placeholder="Requirement" value={r.requirement} onChange={e => updateReq(idx,{ requirement: e.target.value })} />
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold" htmlFor="job-desc">
+            الوصف
+          </label>
+          <TextArea
+            id="job-desc"
+            placeholder="اكتب الوصف أو الصق JD..."
+            rows={6}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            سيمكنك لاحقًا توليد المتطلبات تلقائيًا من الوصف.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl border bg-white/50 p-4 shadow-sm backdrop-blur">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold">المتطلبات</h2>
+          <Button onClick={addReq} type="button">
+            + إضافة متطلب
+          </Button>
+        </div>
+
+        <div className="grid gap-3">
+          {reqs.length === 0 && (
+            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              لا توجد متطلبات بعد — أضف أول متطلب.
             </div>
-            <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-              <label><input type="checkbox" checked={r.mustHave} onChange={e => updateReq(idx,{ mustHave: e.target.checked })} /> mustHave</label>
-              <input type="number" step="0.1" value={r.weight} onChange={e => updateReq(idx,{ weight: Number(e.target.value) })} style={{ width:100 }} />
-              <Button onClick={() => removeReq(idx)}>حذف</Button>
-            </div>
-          </div>
-        ))}
-      </div>
+          )}
 
-      <div style={{ marginTop: 12 }}>
-        <Button onClick={onSubmit} disabled={!title || !description}>حفظ</Button>
+          {reqs.map((r, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border p-3 shadow-sm transition hover:shadow-md"
+            >
+              <div className="grid gap-3 md:grid-cols-12 md:items-center">
+                <div className="md:col-span-6">
+                  <Input
+                    placeholder="Requirement (مثال: React, Next.js...)"
+                    value={r.requirement}
+                    onChange={(e) =>
+                      updateReq(idx, { requirement: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 md:col-span-3">
+                  <input
+                    id={`must-${idx}`}
+                    type="checkbox"
+                    className="h-4 w-4 accent-black"
+                    checked={r.mustHave}
+                    onChange={(e) =>
+                      updateReq(idx, { mustHave: e.target.checked })
+                    }
+                  />
+                  <label htmlFor={`must-${idx}`} className="text-sm">
+                    must-have
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2 md:col-span-2">
+                  <label className="text-sm text-muted-foreground">الوزن</label>
+                  <input
+                    aria-label="الوزن"
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    className="w-24 rounded-md border px-2 py-1"
+                    value={r.weight}
+                    onChange={(e) =>
+                      updateReq(idx, { weight: Number(e.target.value) })
+                    }
+                  />
+                </div>
+
+                <div className="md:col-span-1">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => removeReq(idx)}
+                  >
+                    حذف
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="sticky bottom-6 mt-8 flex justify-end">
+        <Button
+          onClick={onSubmit}
+          disabled={!title || !description || submitting}
+          loading={submitting}
+        >
+          حفظ
+        </Button>
       </div>
     </div>
   );

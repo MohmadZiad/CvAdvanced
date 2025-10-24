@@ -1,87 +1,87 @@
+// =============================
 // apps/web/src/components/Chatbot.tsx
+// =============================
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, X, Play, Loader2, Wand2 } from "lucide-react";
+import {
+  useEffect as useEffect2,
+  useMemo as useMemo2,
+  useState as useState2,
+} from "react";
+import {
+  AnimatePresence as AnimatePresence2,
+  motion as motion2,
+} from "framer-motion";
+import {
+  MessageCircle,
+  X as X2,
+  Play as Play2,
+  Loader2 as Loader22,
+  Wand2 as Wand22,
+} from "lucide-react";
 import ScoreGauge from "./ui/ScoreGauge";
-import { type Lang, t } from "@/lib/i18n";
-import { cvApi } from "@/services/api/cv";
-import { jobsApi } from "@/services/api/jobs";
-import { analysesApi, type Analysis } from "@/services/api/analyses";
+import { type Lang as Lang2, t as t2 } from "@/lib/i18n";
+import { cvApi as cvApi2 } from "@/services/api/cv";
+import { jobsApi as jobsApi2 } from "@/services/api/jobs";
+import {
+  analysesApi as analysesApi2,
+  type Analysis as Analysis2,
+} from "@/services/api/analyses";
+import { Button as Button2 } from "@/components/ui/Button";
 
-type Msg = { role: "bot" | "user" | "sys"; text: string };
+// Shape
+type Msg2 = { role: "bot" | "user" | "sys"; text: string };
 
-/** Safe helper to read language from localStorage (client-only). */
-function getLangFromStorage(): Lang {
+function getLangFromStorage2(): Lang2 {
   try {
     if (typeof window !== "undefined") {
-      return (window.localStorage.getItem("lang") as Lang) || "ar";
+      return (window.localStorage.getItem("lang") as Lang2) || "ar";
     }
-  } catch {
-    // ignore read errors
-  }
+  } catch {}
   return "ar";
 }
 
 export default function Chatbot() {
-  // Modal state
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState2(false);
+  const [lang, setLang] = useState2<Lang2>("ar");
+  const tt = useMemo2(() => (p: string) => t2(lang, p), [lang]);
 
-  /**
-   * IMPORTANT: Do NOT read localStorage during the initial render.
-   * Use a stable default ("ar") and hydrate from localStorage in useEffect.
-   * This avoids "localStorage is not defined" on the first render.
-   */
-  const [lang, setLang] = useState<Lang>("ar");
-
-  // Translation shortcut that re-computes when `lang` changes
-  const tt = useMemo(() => (p: string) => t(lang, p), [lang]);
-
-  // Hydrate language after mount and listen for cross-tab changes
-  useEffect(() => {
-    setLang(getLangFromStorage());
-    const onStorage = () => setLang(getLangFromStorage());
+  useEffect2(() => {
+    setLang(getLangFromStorage2());
+    const onStorage = () => setLang(getLangFromStorage2());
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Chat log
-  const [msgs, setMsgs] = useState<Msg[]>([
+  const [msgs, setMsgs] = useState2<Msg2[]>([
     { role: "bot", text: tt("chat.hello") },
   ]);
+  const [cvs, setCvs] = useState2<any[]>([]);
+  const [jobs, setJobs] = useState2<any[]>([]);
+  const [cvId, setCvId] = useState2("");
+  const [jobId, setJobId] = useState2("");
+  const [jd, setJd] = useState2("");
+  const [loading, setLoading] = useState2(false);
+  const [suggesting, setSuggesting] = useState2(false);
+  const [result, setResult] = useState2<Analysis2 | null>(null);
 
-  // Data for selects
-  const [cvs, setCvs] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [cvId, setCvId] = useState("");
-  const [jobId, setJobId] = useState("");
-
-  // Optional JD text → AI suggestion
-  const [jd, setJd] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [suggesting, setSuggesting] = useState(false);
-  const [result, setResult] = useState<Analysis | null>(null);
-
-  // When the chat opens, fetch CVs and Jobs
-  useEffect(() => {
+  useEffect2(() => {
     if (!open) return;
-    cvApi
+    cvApi2
       .list()
       .then((r) => setCvs(r.items))
       .catch(() => {});
-    jobsApi
+    jobsApi2
       .list()
       .then((r) => setJobs(r.items))
       .catch(() => {});
   }, [open]);
 
-  // Ask AI to suggest requirements from a JD blob
   const handleSuggest = async () => {
     if (!jd.trim()) return;
     try {
       setSuggesting(true);
-      const r = await jobsApi.suggestFromJD(jd);
+      const r = await jobsApi2.suggestFromJD(jd);
       setMsgs((m) => [
         ...m,
         {
@@ -103,14 +103,13 @@ export default function Chatbot() {
     }
   };
 
-  // Run analysis for selected CV + Job
   const run = async () => {
     if (!cvId || !jobId) return;
     setLoading(true);
     setResult(null);
     setMsgs((m) => [...m, { role: "user", text: `${tt("chat.run")} ▶️` }]);
     try {
-      const a = await analysesApi.run({ jobId, cvId }); // returns final
+      const a = await analysesApi2.run({ jobId, cvId });
       const score = Number(a.score ?? 0);
       setResult(a);
       setMsgs((m) => [
@@ -129,101 +128,94 @@ export default function Chatbot() {
 
   return (
     <>
-      {/* Soft background gradients */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-indigo-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(600px_250px_at_10%_10%,rgba(99,102,241,.15),transparent_60%),radial-gradient(600px_250px_at_90%_30%,rgba(236,72,153,.15),transparent_60%)]" />
 
-      {/* Floating open button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 end-5 z-[60] size-12 rounded-2xl bg-gradient-to-br from-black to-stone-800 text-white grid place-items-center shadow-xl hover:scale-105 transition"
+        className="fixed bottom-5 end-5 z-[60] grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-black to-stone-800 text-white shadow-xl transition hover:scale-105"
         aria-label="Open Assistant"
       >
         <MessageCircle />
       </button>
 
-      {/* Chat modal */}
-      <AnimatePresence>
+      <AnimatePresence2>
         {open && (
-          <motion.div
+          <motion2.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm"
           >
-            <motion.div
+            <motion2.div
               initial={{ y: 60, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="absolute bottom-0 end-0 m-5 w-[min(460px,calc(100vw-2.5rem))] rounded-3xl border border-white/20 bg-white/80 dark:bg-black/70 shadow-2xl overflow-hidden"
+              className="absolute bottom-0 end-0 m-5 w-[min(480px,calc(100vw-2.5rem))] overflow-hidden rounded-3xl border border-white/20 bg-white/80 shadow-2xl dark:bg-black/70"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-black/10 dark:border-white/10">
+              <div className="flex items-center justify-between border-b border-black/10 px-4 py-3 dark:border-white/10">
                 <div className="text-sm font-semibold">{tt("chat.title")}</div>
                 <button
                   onClick={() => setOpen(false)}
-                  className="size-8 grid place-items-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
+                  className="grid size-8 place-items-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
                 >
-                  <X size={18} />
+                  <X2 size={18} />
                 </button>
               </div>
 
-              {/* Body */}
-              <div className="max-h-[70vh] overflow-auto p-3 space-y-3">
+              <div className="max-h-[70vh] space-y-3 overflow-auto p-3">
                 {msgs.map((m, i) => (
                   <div
                     key={i}
                     className={
                       m.role === "user"
-                        ? "ms-auto max-w-[85%] rounded-2xl bg-blue-600 text-white px-3 py-2 shadow"
+                        ? "ms-auto max-w-[85%] rounded-2xl bg-blue-600 px-3 py-2 text-white shadow"
                         : m.role === "sys"
-                          ? "mx-auto max-w-[85%] rounded-2xl bg-black/5 dark:bg-white/10 px-3 py-2 text-xs"
-                          : "me-auto max-w-[85%] rounded-2xl bg-white/70 dark:bg-white/10 px-3 py-2 shadow"
+                          ? "mx-auto max-w-[85%] rounded-2xl bg-black/5 px-3 py-2 text-xs dark:bg-white/10"
+                          : "me-auto max-w-[85%] rounded-2xl bg-white/70 px-3 py-2 shadow dark:bg-white/10"
                     }
                   >
                     {m.text}
                   </div>
                 ))}
 
-                {/* JD + AI suggestion panel */}
-                <div className="rounded-2xl border p-3 bg-white/70 dark:bg-white/5 backdrop-blur">
-                  <div className="text-sm font-semibold mb-2">
+                <div className="backdrop-blur rounded-2xl border p-3 dark:bg-white/5">
+                  <div className="mb-2 text-sm font-semibold">
                     Job Description (اختياري)
                   </div>
                   <textarea
                     value={jd}
                     onChange={(e) => setJd(e.target.value)}
-                    className="w-full min-h-[120px] rounded-xl border px-3 py-2 bg-white/70 dark:bg-white/5"
+                    className="min-h-[120px] w-full rounded-xl border bg-white/70 px-3 py-2 dark:bg-white/5"
                     placeholder="ألصق وصف الوظيفة هنا ثم اطلب من الذكاء توليد المتطلبات"
                   />
-                  <div className="flex gap-2 mt-2">
-                    <button
+                  <div className="mt-2 flex gap-2">
+                    <Button2
                       onClick={handleSuggest}
                       disabled={!jd.trim() || suggesting}
-                      className="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40"
                     >
-                      <Wand2 size={16} />{" "}
+                      {suggesting ? (
+                        <Loader22 className="me-2 size-4 animate-spin" />
+                      ) : (
+                        <Wand22 className="me-2 size-4" />
+                      )}{" "}
                       {suggesting
                         ? "جارٍ الاستخراج..."
                         : "اقترح المتطلبات بالذكاء"}
-                    </button>
-                    <button
-                      onClick={() => setJd("")}
-                      className="rounded-2xl px-4 py-2 bg-black/5 dark:bg-white/10"
-                    >
+                    </Button2>
+                    <Button2 variant="ghost" onClick={() => setJd("")}>
                       مسح
-                    </button>
+                    </Button2>
                   </div>
                 </div>
 
-                {/* Selects */}
-                <div className="rounded-2xl border p-3 bg-white/70 dark:bg-white/5 backdrop-blur space-y-2">
+                <div className="backdrop-blur space-y-2 rounded-2xl border p-3 dark:bg-white/5">
                   <div className="text-xs opacity-70">{tt("chat.pickCv")}</div>
                   <select
                     value={cvId}
                     onChange={(e) => setCvId(e.target.value)}
-                    className="w-full rounded-xl border px-3 py-2 bg-white/70 dark:bg-white/5"
+                    className="w-full rounded-xl border bg-white/70 px-3 py-2 dark:bg-white/5"
                   >
                     <option value="">{tt("chat.pickCv")}</option>
                     {cvs.map((c) => (
@@ -233,13 +225,13 @@ export default function Chatbot() {
                     ))}
                   </select>
 
-                  <div className="text-xs opacity-70 mt-2">
+                  <div className="mt-2 text-xs opacity-70">
                     {tt("chat.pickJob")}
                   </div>
                   <select
                     value={jobId}
                     onChange={(e) => setJobId(e.target.value)}
-                    className="w-full rounded-xl border px-3 py-2 bg-white/70 dark:bg-white/5"
+                    className="w-full rounded-xl border bg-white/70 px-3 py-2 dark:bg-white/5"
                   >
                     <option value="">{tt("chat.pickJob")}</option>
                     {jobs.map((j) => (
@@ -249,33 +241,32 @@ export default function Chatbot() {
                     ))}
                   </select>
 
-                  <button
+                  <Button2
                     onClick={run}
                     disabled={!cvId || !jobId || loading}
-                    className="mt-2 inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-black text-white px-4 py-2 hover:opacity-90 disabled:opacity-40"
+                    className="mt-2 w-full"
                   >
                     {loading ? (
-                      <Loader2 className="animate-spin" />
+                      <Loader22 className="me-2 animate-spin" />
                     ) : (
-                      <Play size={16} />
-                    )}
+                      <Play2 className="me-2" size={16} />
+                    )}{" "}
                     {loading ? tt("chat.running") : tt("chat.run")}
-                  </button>
+                  </Button2>
                 </div>
 
-                {/* Result */}
                 {result && (
-                  <motion.div
+                  <motion2.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl border p-3 bg-white/70 dark:bg-white/5 backdrop-blur space-y-3"
+                    className="backdrop-blur space-y-3 rounded-2xl border p-3 dark:bg-white/5"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[160px_1fr]">
                       <div className="grid place-items-center">
                         <ScoreGauge value={Number(result.score || 0)} />
                       </div>
                       <div>
-                        <div className="font-semibold mb-1">
+                        <div className="mb-1 font-semibold">
                           {tt("chat.score")} •{" "}
                           {Number(result.score || 0).toFixed(2)}
                         </div>
@@ -287,7 +278,7 @@ export default function Chatbot() {
                             {result.gaps.mustHaveMissing?.map((g) => (
                               <span
                                 key={"m" + g}
-                                className="px-2 py-1 text-xs rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                                className="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
                               >
                                 Must: {g}
                               </span>
@@ -295,7 +286,7 @@ export default function Chatbot() {
                             {result.gaps.improve?.map((g) => (
                               <span
                                 key={"i" + g}
-                                className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                                className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
                               >
                                 Improve: {g}
                               </span>
@@ -307,12 +298,12 @@ export default function Chatbot() {
 
                     {Array.isArray(result.breakdown) && (
                       <div className="mt-2">
-                        <div className="font-semibold mb-2">Breakdown</div>
-                        <div className="space-y-2 max-h-64 overflow-auto pr-1">
+                        <div className="mb-2 font-semibold">Breakdown</div>
+                        <div className="max-h-64 space-y-2 overflow-auto pr-1">
                           {result.breakdown.map((r: any, idx: number) => (
                             <div
                               key={idx}
-                              className="rounded-xl border px-3 py-2 bg-white/60 dark:bg-white/10"
+                              className="rounded-xl border bg-white/60 px-3 py-2 dark:bg-white/10"
                             >
                               <div className="text-sm font-medium">
                                 {r.requirement}
@@ -328,13 +319,13 @@ export default function Chatbot() {
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </motion2.div>
                 )}
               </div>
-            </motion.div>
-          </motion.div>
+            </motion2.div>
+          </motion2.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence2>
     </>
   );
 }

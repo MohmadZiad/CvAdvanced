@@ -1,53 +1,266 @@
+/* Tailwind v4 CSS entry */
 @import "tailwindcss";
 
-/* Light/Dark colors via CSS vars */
+/* ===== Theme Tokens (RGB values) ===== */
 :root {
-  --background: #ffffff;
-  --foreground: #111111;
+  --background: 255 255 255;
+  --foreground: 17 17 17;
+
+  --card: 255 255 255;
+  --card-foreground: 20 20 20;
+
+  --popover: 255 255 255;
+  --popover-foreground: 20 20 20;
+
+  --primary: 0 0 0;
+  --primary-foreground: 255 255 255;
+
+  --secondary: 245 245 245;
+  --secondary-foreground: 15 15 15;
+
+  --muted: 245 246 248;
+  --muted-foreground: 100 102 105;
+
+  --accent: 240 240 240;
+  --accent-foreground: 20 20 20;
+
+  --destructive: 220 38 38;
+  --destructive-foreground: 255 255 255;
+
+  --border: 229 231 235;
+  --input: 229 231 235;
+  --ring: 0 0 0;
+
+  --radius: 0.75rem;
 }
+
+/* Dark (media) + يدعم .dark على <html> */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0b0f;
-    --foreground: #ededed;
+    --background: 10 11 16;
+    --foreground: 235 235 235;
+
+    --card: 17 18 24;
+    --card-foreground: 240 240 240;
+
+    --popover: 16 16 20;
+    --popover-foreground: 235 235 240;
+
+    --primary: 255 255 255;
+    --primary-foreground: 0 0 0;
+
+    --secondary: 32 34 40;
+    --secondary-foreground: 240 240 245;
+
+    --muted: 28 30 36;
+    --muted-foreground: 156 163 175;
+
+    --accent: 34 37 44;
+    --accent-foreground: 242 242 247;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+
+    --border: 38 41 48;
+    --input: 38 41 48;
+    --ring: 255 255 255;
   }
 }
+.dark {
+  --background: 10 11 16;
+  --foreground: 235 235 235;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --card: 17 18 24;
+  --card-foreground: 240 240 240;
+
+  --popover: 16 16 20;
+  --popover-foreground: 235 235 240;
+
+  --primary: 255 255 255;
+  --primary-foreground: 0 0 0;
+
+  --secondary: 32 34 40;
+  --secondary-foreground: 240 240 245;
+
+  --muted: 28 30 36;
+  --muted-foreground: 156 163 175;
+
+  --accent: 34 37 44;
+  --accent-foreground: 242 242 247;
+
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+
+  --border: 38 41 48;
+  --input: 38 41 48;
+  --ring: 255 255 255;
 }
 
+/* ===== Tailwind v4 @theme: يربط أسماء الألوان بالكستـم فاريابلز */
+@theme {
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+}
+
+/* ===== Base resets ===== */
 html,
 body {
   height: 100%;
 }
 body {
-  background: var(--background);
-  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
   font-family:
     var(--font-geist-sans),
     ui-sans-serif,
     system-ui,
     -apple-system,
-    Segoe UI,
+    "Segoe UI",
     Roboto,
     Helvetica,
-    Arial;
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
 }
 
-/* simple animations */
-@keyframes floaty {
-  from {
-    transform: translateY(0px);
+/* كل العناصر ترث لون البوردر */
+*,
+*::before,
+*::after {
+  border-color: rgb(var(--border) / 1);
+}
+
+/* Selection */
+::selection {
+  background: rgba(127, 127, 255, 0.35);
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.5) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(140, 140, 140, 0.5),
+    rgba(90, 90, 90, 0.5)
+  );
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Components */
+@layer components {
+  .card {
+    @apply rounded-2xl border bg-card text-card-foreground shadow-[0_10px_25px_-5px_rgba(0,0,0,.08)];
   }
-  to {
+  .card-soft {
+    @apply rounded-2xl border shadow-[0_8px_30px_rgba(0,0,0,.06)] bg-white/70 backdrop-blur dark:bg-white/5;
+  }
+  .glass {
+    @apply bg-white/70 backdrop-blur dark:bg-white/5;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium;
+  }
+  .badge-rose {
+    @apply bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300;
+  }
+  .badge-amber {
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-foreground text-background hover:bg-foreground/90;
+  }
+  .btn-secondary {
+    @apply border bg-muted text-foreground hover:bg-muted/80;
+  }
+  .btn-ghost {
+    @apply bg-transparent hover:bg-muted;
+  }
+  .btn-destructive {
+    @apply bg-red-600 text-white hover:bg-red-600/90;
+  }
+}
+
+@layer utilities {
+  .shadow-soft {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  }
+  .shadow-card {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  }
+  .ring-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring;
+  }
+  .me-auto,
+  .ms-auto {
+    max-width: 85%;
+  } /* فقاعات الشات */
+  .hover-glow:hover {
+    box-shadow:
+      0 0 0 4px rgba(99, 102, 241, 0.12),
+      0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+  .bg-soft-grid {
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .bg-soft-grid-dark {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
+@keyframes floaty {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
     transform: translateY(-6px);
   }
 }
-.animate-floaty {
-  animation: floaty 2s ease-in-out infinite alternate;
-}
-/* فقاعات لطيفة */
-.me-auto, .ms-auto { max-width: 85%; }

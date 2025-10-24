@@ -1,9 +1,39 @@
+// =============================
 // apps/web/src/components/AIConsole.tsx
+// =============================
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Paperclip, Send, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
+import {
+  Paperclip,
+  Send,
+  FileText,
+  Loader2,
+  CheckCircle2,
+  Sparkles,
+  Trash2,
+  Mic,
+  MicOff,
+  ShieldCheck,
+  Info,
+  Play,
+  Circle,
+  Plus,
+  X,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  ClipboardCopy,
+  Settings2,
+  Wand2,
+} from "lucide-react";
 import { cvApi } from "@/services/api/cv";
 import { jobsApi, type JobRequirement } from "@/services/api/jobs";
 import { analysesApi, type Analysis } from "@/services/api/analyses";
@@ -12,8 +42,12 @@ import { t } from "@/lib/i18n";
 import RequirementPicker, {
   type ReqItem,
 } from "@/components/RequirementPicker";
+import { Button } from "@/components/ui/Button";
 
-/** Chat message shape */
+// ----------------------------------------
+// Helpers
+// ----------------------------------------
+
 type Msg = {
   id: string;
   role: "bot" | "user" | "sys";
@@ -28,9 +62,10 @@ function getLangFromStorage(): Lang {
   } catch {}
   return "ar";
 }
+
 function useLang(): Lang {
-  const [lang, setLang] = React.useState<Lang>("ar");
-  React.useEffect(() => {
+  const [lang, setLang] = useState<Lang>("ar");
+  useEffect(() => {
     setLang(getLangFromStorage());
     const onStorage = () => setLang(getLangFromStorage());
     window.addEventListener("storage", onStorage);
@@ -38,6 +73,7 @@ function useLang(): Lang {
   }, []);
   return lang;
 }
+
 function parseRequirements(text: string): JobRequirement[] {
   return text
     .split("\n")
@@ -45,30 +81,52 @@ function parseRequirements(text: string): JobRequirement[] {
     .filter(Boolean)
     .map((line) => {
       const parts = line
-        .split(/[,|،]/)
+        .split(/[，,|،]/)
         .map((p) => p.trim())
         .filter(Boolean);
       const requirement = parts[0] || line;
       const mustHave = parts.some((p) => /^must/i.test(p) || /^ضروري/.test(p));
       const weightPart = parts.find((p) => /^\d+(\.\d+)?$/.test(p));
       const weight = weightPart ? Number(weightPart) : 1;
-      return { requirement, mustHave, weight };
+      return { requirement, mustHave, weight } as JobRequirement;
     });
 }
+
+function useAutoScroll<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const scrollToBottom = React.useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, []);
+  return { ref, scrollToBottom } as const;
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-black/5 px-2 py-1 text-xs text-foreground dark:bg-white/10">
+      {children}
+    </span>
+  );
+}
+
+// ----------------------------------------
+// AIConsole Component
+// ----------------------------------------
 
 export default function AIConsole() {
   const lang = useLang();
   const tt = (k: string) => t(lang, k);
 
-  const [messages, setMessages] = React.useState<Msg[]>([
+  const [messages, setMessages] = useState<Msg[]>([
     {
       id: "m0",
       role: "bot",
       content: (
         <div>
           <div className="font-semibold">{tt("chat.title")}</div>
-          <div className="text-sm opacity-80 mt-1">{tt("chat.hello")}</div>
-          <ul className="text-xs opacity-70 mt-2 list-disc ps-5">
+          <div className="mt-1 text-sm opacity-80">{tt("chat.hello")}</div>
+          <ul className="mt-2 list-disc ps-5 text-xs opacity-70">
             <li>
               1) اكتب المتطلبات (سطر لكل متطلب) مع must و/أو وزن (مثال: 2).
             </li>
@@ -80,19 +138,18 @@ export default function AIConsole() {
     },
   ]);
 
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [reqText, setReqText] = React.useState("");
-  const [reqs, setReqs] = React.useState<JobRequirement[]>([]);
-  const [cvFile, setCvFile] = React.useState<File | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState<Analysis | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [reqText, setReqText] = useState("");
+  const [reqs, setReqs] = useState<JobRequirement[]>([]);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<Analysis | null>(null);
+  const [expanded, setExpanded] = useState(true);
+  const [peekBreakdown, setPeekBreakdown] = useState(false);
 
-  const listRef = React.useRef<HTMLDivElement | null>(null);
-  React.useEffect(() => {
-    const el = listRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages, result]);
+  const { ref: listRef, scrollToBottom } = useAutoScroll<HTMLDivElement>();
+  useEffect(() => scrollToBottom(), [messages, result, scrollToBottom]);
 
   const push = (m: Omit<Msg, "id">) =>
     setMessages((s) => [
@@ -109,7 +166,7 @@ export default function AIConsole() {
       content: (
         <div>
           <div className="font-medium">Job Requirements</div>
-          <ul className="text-sm mt-1 list-disc ps-5">
+          <ul className="mt-1 list-disc ps-5 text-sm">
             {parsed.map((r, i) => (
               <li key={i}>
                 {r.requirement} {r.mustHave ? "• must" : ""}{" "}
@@ -131,7 +188,6 @@ export default function AIConsole() {
     setReqText("");
   };
 
-  // إدراج بند من RequirementPicker إلى الـtextarea مباشرة (بدون تغيير لوجيك التحليل)
   const onQuickAdd = (item: ReqItem) => {
     const line = `${item.requirement}${item.mustHave ? ", must" : ""}, ${item.weight}`;
     setReqText((prev) => (prev ? `${prev}\n${line}` : line));
@@ -150,6 +206,40 @@ export default function AIConsole() {
         </div>
       ),
     });
+  };
+
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const startVoice = () => {
+    try {
+      const SpeechRecognition =
+        (window as any).webkitSpeechRecognition ||
+        (window as any).SpeechRecognition;
+      if (!SpeechRecognition)
+        return alert("متصفحك لا يدعم تحويل الكلام إلى نص.");
+      const rec = new SpeechRecognition();
+      rec.lang = lang === "ar" ? "ar-JO" : "en-US";
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.onresult = (e: any) => {
+        const txt = e.results?.[0]?.[0]?.transcript || "";
+        if (txt) setReqText((p) => (p ? `${p}\n${txt}` : txt));
+      };
+      rec.onend = () => setListening(false);
+      recognitionRef.current = rec;
+      setListening(true);
+      rec.start();
+    } catch (_) {
+      setListening(false);
+    }
+  };
+
+  const stopVoice = () => {
+    try {
+      recognitionRef.current?.stop?.();
+    } catch {}
+    setListening(false);
   };
 
   const run = async () => {
@@ -184,8 +274,6 @@ export default function AIConsole() {
         requirements: reqs,
       });
       const uploaded = await cvApi.upload(cvFile);
-      const a = await analysesApi.run({ jobId: job.id, cvId: uploaded.cvId });
-
       push({
         role: "sys",
         content: (
@@ -197,10 +285,9 @@ export default function AIConsole() {
           </div>
         ),
       });
-
+      const a = await analysesApi.run({ jobId: job.id, cvId: uploaded.cvId });
       const final = await analysesApi.get(a.id);
       setResult(final);
-
       push({
         role: "bot",
         content: (
@@ -249,7 +336,7 @@ export default function AIConsole() {
               </div>
             )}
             {final.gaps && (
-              <div className="mt-3 text-xs opacity-80 space-y-1">
+              <div className="mt-3 space-y-1 text-xs opacity-80">
                 <div>
                   <b>{tt("chat.gaps")}</b>
                 </div>
@@ -276,21 +363,43 @@ export default function AIConsole() {
     }
   };
 
-  return (
-    <div className="mx-auto max-w-3xl">
-      <div className="relative rounded-[28px] border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 p-4 shadow-xl overflow-hidden">
-        <div className="pointer-events-none absolute -z-10 -top-24 -start-24 size-72 rounded-full bg-blue-200/40 blur-3xl" />
-        <div className="pointer-events-none absolute -z-10 -bottom-24 -end-24 size-72 rounded-full bg-purple-200/40 blur-3xl" />
+  // Motion background blobs
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rotate = useTransform(mx, [0, 1], [0, 6]);
 
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="relative overflow-hidden rounded-[28px] border border-black/10 bg-white/70 p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
+        {/* Animated blobs */}
+        <motion.div
+          style={{ rotate }}
+          className="pointer-events-none absolute -left-24 -top-24 -z-10 size-72 rounded-full bg-blue-200/40 blur-3xl"
+        />
+        <motion.div
+          style={{ rotate }}
+          className="pointer-events-none absolute -bottom-24 -right-24 -z-10 size-72 rounded-full bg-purple-200/40 blur-3xl"
+        />
+
+        {/* Header */}
         <div className="flex items-center justify-between px-2 pb-3">
-          <div className="font-semibold">AI • {t(lang, "app")}</div>
-          <div className="text-xs opacity-60">Chat Console</div>
+          <div className="inline-flex items-center gap-2 font-semibold">
+            <Sparkles className="size-4" /> AI • {t(lang, "app")}
+          </div>
+          <div className="flex items-center gap-2 text-xs opacity-60">
+            <Chip>
+              <ShieldCheck className="size-3" /> Privacy-first
+            </Chip>
+            <Chip>
+              <Info className="size-3" /> Beta
+            </Chip>
+          </div>
         </div>
 
-        {/* الرسائل */}
+        {/* Messages */}
         <div
           ref={listRef}
-          className="space-y-2 max-h-[55vh] overflow-y-auto pe-1"
+          className="max-h-[55vh] space-y-2 overflow-y-auto pe-1"
           aria-live="polite"
         >
           <AnimatePresence initial={false}>
@@ -302,10 +411,10 @@ export default function AIConsole() {
                 exit={{ opacity: 0, y: -6 }}
                 className={
                   m.role === "user"
-                    ? "ms-auto max-w-[85%] rounded-2xl bg-blue-600 text-white px-3 py-2 shadow"
+                    ? "ms-auto max-w-[85%] rounded-2xl bg-blue-600 px-3 py-2 text-white shadow"
                     : m.role === "sys"
-                      ? "mx-auto max-w-[85%] rounded-2xl bg-black/5 dark:bg-white/10 px-3 py-2 text-xs"
-                      : "me-auto max-w-[85%] rounded-2xl bg-white/80 dark:bg-white/10 px-3 py-2 shadow"
+                      ? "mx-auto max-w-[85%] rounded-2xl bg-black/5 px-3 py-2 text-xs dark:bg-white/10"
+                      : "me-auto max-w-[85%] rounded-2xl bg-white/80 px-3 py-2 shadow dark:bg-white/10"
                 }
               >
                 {m.content}
@@ -314,25 +423,34 @@ export default function AIConsole() {
           </AnimatePresence>
 
           {result && (
-            <div className="me-auto max-w-[85%] rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 px-3 py-2">
+            <div className="me-auto max-w-[85%] rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-700 dark:bg-emerald-900/20">
               <div className="text-sm">
                 <b>{tt("chat.score")}:</b> {result.score?.toFixed?.(2) ?? "-"} /
                 10
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {result.gaps?.mustHaveMissing?.map((g) => (
+                  <Chip key={"m" + g}>Must: {g}</Chip>
+                ))}
+                {result.gaps?.improve?.map((g) => (
+                  <Chip key={"i" + g}>Improve: {g}</Chip>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* التحكم */}
+        {/* Control */}
         <div className="mt-3 grid gap-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {/* Title / Desc */}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <input
               placeholder={
                 lang === "ar" ? "Job Title (اختياري)" : "Job Title (optional)"
               }
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-xl border px-3 py-2 bg-white/90 dark:bg-white/10"
+              className="rounded-xl border bg-white/90 px-3 py-2 dark:bg-white/10"
             />
             <input
               placeholder={
@@ -342,40 +460,154 @@ export default function AIConsole() {
               }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="rounded-xl border px-3 py-2 bg-white/90 dark:bg-white/10"
+              className="rounded-xl border bg-white/90 px-3 py-2 dark:bg-white/10"
             />
           </div>
 
-          <div className="rounded-2xl border p-2 bg-white/60 dark:bg-white/10">
-            <div className="text-xs opacity-70 mb-1">
+          {/* Requirements */}
+          <div className="rounded-2xl border bg-white/60 p-2 dark:bg-white/10">
+            <div className="mb-1 text-xs opacity-70">
               {lang === "ar"
                 ? "Requirements (سطر لكل متطلب، اكتب must/وزن اختياريًا)"
                 : "Requirements (one per line, you can add 'must' and/or a weight)"}
             </div>
 
-            {/* RequirementPicker كمُدخل سريع */}
             <div className="mb-2">
               <RequirementPicker onAdd={onQuickAdd} />
             </div>
 
-            <textarea
-              value={reqText}
-              onChange={(e) => setReqText(e.target.value)}
-              rows={4}
-              placeholder={
-                lang === "ar"
-                  ? `مثال:\nReact, must, 2\nTypeScript, 1\nTailwind`
-                  : `Example:\nReact, must, 2\nTypeScript, 1\nTailwind`
-              }
-              className="w-full rounded-xl border px-3 py-2 bg-white/90 dark:bg-white/10"
-            />
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <textarea
+                value={reqText}
+                onChange={(e) => setReqText(e.target.value)}
+                rows={4}
+                placeholder={
+                  lang === "ar"
+                    ? `مثال:\nReact, must, 2\nTypeScript, 1\nTailwind`
+                    : `Example:\nReact, must, 2\nTypeScript, 1\nTailwind`
+                }
+                className="w-full rounded-xl border bg-white/90 px-3 py-2 dark:bg-white/10"
+              />
+              <div className="flex items-start gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onSendReqs}
+                  className="whitespace-nowrap"
+                >
+                  {lang === "ar" ? "أضف المتطلبات" : "Add Requirements"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setReqText("")}
+                >
+                  {lang === "ar" ? "مسح" : "Clear"}
+                </Button>
+              </div>
+            </div>
 
-            <div className="mt-2 flex items-center justify-between">
+            {/* Recorded requirements preview */}
+            {reqs.length > 0 && (
+              <div className="mt-2 rounded-xl border bg-white/70 p-2 dark:bg-white/5">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold opacity-70">
+                    Requirements ({reqs.length})
+                  </div>
+                  <button
+                    onClick={() => setExpanded((v) => !v)}
+                    className="inline-flex items-center gap-1 text-xs opacity-70 hover:opacity-100"
+                  >
+                    {expanded ? (
+                      <ChevronUp className="size-4" />
+                    ) : (
+                      <ChevronDown className="size-4" />
+                    )}{" "}
+                    تفاصيل
+                  </button>
+                </div>
+                <AnimatePresence initial={false}>
+                  {expanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                        {reqs.map((r, i) => (
+                          <li
+                            key={i}
+                            className="flex items-center justify-between rounded-lg border px-2 py-1 text-xs"
+                          >
+                            <span className="truncate">
+                              {r.requirement}
+                              {r.mustHave && (
+                                <span className="ms-2 rounded bg-rose-100 px-1 py-0.5 text-[10px] text-rose-700">
+                                  must
+                                </span>
+                              )}
+                              {r.weight !== 1 && (
+                                <span className="ms-2 rounded bg-amber-100 px-1 py-0.5 text-[10px] text-amber-700">
+                                  w={r.weight}
+                                </span>
+                              )}
+                            </span>
+                            <button
+                              onClick={() =>
+                                setReqs((prev) =>
+                                  prev.filter((_, idx) => idx !== i)
+                                )
+                              }
+                              className="text-rose-600 hover:text-rose-700"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Voice add */}
+                <div className="mt-2 flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={listening ? stopVoice : startVoice}
+                    className={
+                      listening
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        : ""
+                    }
+                  >
+                    {listening ? (
+                      <MicOff className="me-2 size-4" />
+                    ) : (
+                      <Mic className="me-2 size-4" />
+                    )}{" "}
+                    {listening
+                      ? lang === "ar"
+                        ? "إيقاف الإملاء"
+                        : "Stop Dictation"
+                      : lang === "ar"
+                        ? "إضافة صوتية"
+                        : "Voice Add"}
+                  </Button>
+                  <div className="text-xs opacity-60">
+                    تحويل الكلام إلى نص لتعبئة المتطلبات سريعًا
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 flex items-center justify-between">
               <label
                 htmlFor="cvfile"
-                className="inline-flex items-center gap-2 text-sm cursor-pointer"
+                className="inline-flex cursor-pointer items-center gap-2 text-sm"
               >
-                <span className="size-8 grid place-items-center rounded-xl bg-black text-white">
+                <span className="grid size-8 place-items-center rounded-xl bg-black text-white">
                   <Paperclip className="size-4" />
                 </span>
                 <input
@@ -395,35 +627,25 @@ export default function AIConsole() {
               </label>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={onSendReqs}
-                  className="rounded-xl border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-                >
-                  {lang === "ar" ? "أضف المتطلبات" : "Add Requirements"}
-                </button>
-                <button
-                  onClick={run}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-black text-white px-4 py-2 hover:opacity-90 disabled:opacity-40"
-                >
+                <Button onClick={run} disabled={loading}>
                   {loading ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <Loader2 className="me-2 size-4 animate-spin" />
                   ) : (
-                    <Send className="size-4" />
+                    <Send className="me-2 size-4" />
                   )}
                   {loading
                     ? lang === "ar"
                       ? "جاري العمل…"
                       : "Working…"
                     : tt("chat.run")}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="text-xs opacity-60 text-center mt-4">
+      <div className="mt-4 text-center text-xs opacity-60">
         Next.js • Tailwind • Motion
       </div>
     </div>
