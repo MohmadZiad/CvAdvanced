@@ -9,9 +9,7 @@ import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
 /**
- * Fonts:
- * - نستخدم next/font لحقن متغيرات CSS (بدون FOUT)
- * - متوافق مع الـ classes المستخدمة في globals.css
+ * Fonts
  */
 const display = Plus_Jakarta_Sans({
   variable: "--font-display",
@@ -35,15 +33,14 @@ const mono = JetBrains_Mono({
 });
 
 /**
- * Metadata + Viewport:
- * - theme-color ديناميكي عبر media لتوافق المتصفحات
- * - العنوان يؤخذ من ENV إن وُجد
+ * Metadata + Viewport
  */
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_APP_NAME || "CV Matcher",
   description: "Modern bilingual UI for CV–Job matching",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
@@ -51,19 +48,13 @@ export const viewport: Viewport = {
   ],
 };
 
-/**
- * RootLayout:
- * - نبدأ بـ lang=ar و dir=rtl افتراضيًا، وبنعدّل فورًا قبل الرسم عبر سكربت صغير داخل <head>
- * - السكربت يقرأ localStorage: lang, theme
- * - لو theme="dark" بنضيف .dark على <html> (مُفعّل مع Tailwind)
- */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
-        {/* تهيئة مبكرة جدًا: اللغة/الاتجاه والثيم بدون فلاش */}
+        {/* تهيئة مبكرة للّغة/الاتجاه والثيم لتجنب الفلاش */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -85,6 +76,7 @@ export default function RootLayout({
       </head>
 
       <body
+        suppressHydrationWarning
         className={cn(
           "min-h-dvh bg-background font-sans text-foreground antialiased",
           display.variable,
@@ -109,10 +101,10 @@ export default function RootLayout({
           <div className="pointer-events-none fixed inset-x-0 top-0 z-[-10] h-24 bg-gradient-to-b from-white/70 via-white/10 to-transparent dark:from-black/60 dark:via-black/20" />
 
           <div className="relative z-10 flex min-h-dvh flex-col">
-            {/* شريط علوي؛ خليه يقرأ اللغة/الثيم ويعرض سويتشر */}
             <Topbar />
-
-            <main className="container relative flex-1 pb-20 pt-10">{children}</main>
+            <main className="container relative flex-1 pb-20 pt-10">
+              {children}
+            </main>
 
             <footer className="container pb-10 text-xs text-foreground/60">
               <div className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-white/50 px-6 py-4 backdrop-blur-md dark:bg-white/10 md:flex-row md:items-center md:justify-between">
@@ -125,7 +117,8 @@ export default function RootLayout({
                       {process.env.NEXT_PUBLIC_APP_NAME || "CV Matcher"}
                     </p>
                     <p className="text-[11px] text-foreground/50">
-                      © {new Date().getFullYear()} • Crafted with Motion & Accessibility first
+                      © {new Date().getFullYear()} • Crafted with Motion &
+                      Accessibility first
                     </p>
                   </div>
                 </div>
