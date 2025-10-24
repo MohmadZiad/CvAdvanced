@@ -133,10 +133,10 @@ export default function Chatbot() {
 
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 end-5 z-[60] grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-black to-stone-800 text-white shadow-xl transition hover:scale-105"
+        className="fixed bottom-6 end-6 z-[60] grid size-14 place-items-center rounded-[1.75rem] bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-[0_20px_45px_-22px_rgba(37,99,235,0.75)] transition hover:scale-105"
         aria-label="Open Assistant"
       >
-        <MessageCircle />
+        <MessageCircle size={24} />
       </button>
 
       <AnimatePresence2>
@@ -152,48 +152,52 @@ export default function Chatbot() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="absolute bottom-0 end-0 m-5 w-[min(480px,calc(100vw-2.5rem))] overflow-hidden rounded-3xl border border-white/20 bg-white/80 shadow-2xl dark:bg-black/70"
+              className="absolute bottom-0 end-0 m-6 w-[min(520px,calc(100vw-3rem))] overflow-hidden rounded-[2.25rem] border border-border/40 bg-white/85 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:bg-white/10"
             >
-              <div className="flex items-center justify-between border-b border-black/10 px-4 py-3 dark:border-white/10">
-                <div className="text-sm font-semibold">{tt("chat.title")}</div>
+              <div className="flex items-center justify-between border-b border-border/50 bg-white/60 px-6 py-4 dark:bg-white/5">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.28em] text-foreground/50">Assistant</div>
+                  <div className="text-sm font-semibold text-foreground">{tt("chat.title")}</div>
+                </div>
                 <button
                   onClick={() => setOpen(false)}
-                  className="grid size-8 place-items-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
+                  className="grid size-9 place-items-center rounded-xl border border-transparent bg-white/70 text-foreground/70 transition hover:border-border/70 hover:text-foreground dark:bg-white/5"
                 >
                   <X2 size={18} />
                 </button>
               </div>
 
-              <div className="max-h-[70vh] space-y-3 overflow-auto p-3">
+              <div className="max-h-[70vh] space-y-4 overflow-auto p-5">
                 {msgs.map((m, i) => (
                   <div
                     key={i}
                     className={
                       m.role === "user"
-                        ? "ms-auto max-w-[85%] rounded-2xl bg-blue-600 px-3 py-2 text-white shadow"
+                        ? "ms-auto max-w-[82%] rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg"
                         : m.role === "sys"
-                          ? "mx-auto max-w-[85%] rounded-2xl bg-black/5 px-3 py-2 text-xs dark:bg-white/10"
-                          : "me-auto max-w-[85%] rounded-2xl bg-white/70 px-3 py-2 shadow dark:bg-white/10"
+                          ? "mx-auto max-w-[70%] rounded-2xl border border-dashed border-border/60 px-4 py-2 text-[11px] uppercase tracking-[0.32em] text-foreground/50"
+                          : "me-auto max-w-[82%] rounded-2xl border border-border/50 bg-white/85 px-4 py-3 text-sm text-foreground shadow-sm backdrop-blur dark:bg-white/10"
                     }
                   >
                     {m.text}
                   </div>
                 ))}
 
-                <div className="backdrop-blur rounded-2xl border p-3 dark:bg-white/5">
-                  <div className="mb-2 text-sm font-semibold">
+                <div className="rounded-2xl border border-border/50 bg-white/80 p-4 shadow-sm backdrop-blur dark:bg-white/10">
+                  <div className="mb-2 text-sm font-semibold text-foreground">
                     Job Description (اختياري)
                   </div>
                   <textarea
                     value={jd}
                     onChange={(e) => setJd(e.target.value)}
-                    className="min-h-[120px] w-full rounded-xl border bg-white/70 px-3 py-2 dark:bg-white/5"
+                    className="min-h-[140px] w-full rounded-2xl border border-border/50 bg-white/90 px-4 py-3 text-sm leading-relaxed text-foreground/70 shadow-inner dark:bg-white/10"
                     placeholder="ألصق وصف الوظيفة هنا ثم اطلب من الذكاء توليد المتطلبات"
                   />
                   <div className="mt-2 flex gap-2">
                     <Button2
                       onClick={handleSuggest}
                       disabled={!jd.trim() || suggesting}
+                      className="border border-border/50 bg-white/80 text-foreground/70 transition hover:text-foreground dark:bg-white/10"
                     >
                       {suggesting ? (
                         <Loader22 className="me-2 size-4 animate-spin" />
@@ -210,12 +214,12 @@ export default function Chatbot() {
                   </div>
                 </div>
 
-                <div className="backdrop-blur space-y-2 rounded-2xl border p-3 dark:bg-white/5">
-                  <div className="text-xs opacity-70">{tt("chat.pickCv")}</div>
+                <div className="space-y-4 rounded-2xl border border-border/50 bg-white/85 p-4 shadow-sm backdrop-blur dark:bg-white/10">
+                  <div className="text-xs uppercase tracking-[0.32em] text-foreground/50">{tt("chat.pickCv")}</div>
                   <select
                     value={cvId}
                     onChange={(e) => setCvId(e.target.value)}
-                    className="w-full rounded-xl border bg-white/70 px-3 py-2 dark:bg-white/5"
+                    className="w-full rounded-2xl border border-border/60 bg-white/90 px-3 py-2 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
                   >
                     <option value="">{tt("chat.pickCv")}</option>
                     {cvs.map((c) => (
@@ -225,13 +229,13 @@ export default function Chatbot() {
                     ))}
                   </select>
 
-                  <div className="mt-2 text-xs opacity-70">
+                  <div className="text-xs uppercase tracking-[0.32em] text-foreground/50">
                     {tt("chat.pickJob")}
                   </div>
                   <select
                     value={jobId}
                     onChange={(e) => setJobId(e.target.value)}
-                    className="w-full rounded-xl border bg-white/70 px-3 py-2 dark:bg-white/5"
+                    className="w-full rounded-2xl border border-border/60 bg-white/90 px-3 py-2 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
                   >
                     <option value="">{tt("chat.pickJob")}</option>
                     {jobs.map((j) => (
@@ -244,7 +248,7 @@ export default function Chatbot() {
                   <Button2
                     onClick={run}
                     disabled={!cvId || !jobId || loading}
-                    className="mt-2 w-full"
+                    className="w-full bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-soft hover:brightness-110"
                   >
                     {loading ? (
                       <Loader22 className="me-2 animate-spin" />
@@ -259,18 +263,17 @@ export default function Chatbot() {
                   <motion2.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="backdrop-blur space-y-3 rounded-2xl border p-3 dark:bg-white/5"
+                    className="space-y-4 rounded-2xl border border-border/50 bg-white/90 p-4 shadow-sm backdrop-blur dark:bg-white/10"
                   >
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-[160px_1fr]">
                       <div className="grid place-items-center">
                         <ScoreGauge value={Number(result.score || 0)} />
                       </div>
                       <div>
-                        <div className="mb-1 font-semibold">
-                          {tt("chat.score")} •{" "}
-                          {Number(result.score || 0).toFixed(2)}
+                        <div className="mb-1 font-semibold text-foreground">
+                          {tt("chat.score")} • {Number(result.score || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs opacity-70">
+                        <div className="text-xs text-foreground/60">
                           model: {result.model} • status: {result.status}
                         </div>
                         {result.gaps && (
@@ -278,7 +281,7 @@ export default function Chatbot() {
                             {result.gaps.mustHaveMissing?.map((g) => (
                               <span
                                 key={"m" + g}
-                                className="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                                className="rounded-full bg-rose-100 px-2 py-1 text-xs font-medium text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
                               >
                                 Must: {g}
                               </span>
@@ -286,7 +289,7 @@ export default function Chatbot() {
                             {result.gaps.improve?.map((g) => (
                               <span
                                 key={"i" + g}
-                                className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                                className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
                               >
                                 Improve: {g}
                               </span>
@@ -303,12 +306,12 @@ export default function Chatbot() {
                           {result.breakdown.map((r: any, idx: number) => (
                             <div
                               key={idx}
-                              className="rounded-xl border bg-white/60 px-3 py-2 dark:bg-white/10"
+                              className="rounded-xl border border-border/50 bg-white/80 px-3 py-2 text-sm text-foreground/80 shadow-sm dark:bg-white/10"
                             >
-                              <div className="text-sm font-medium">
+                              <div className="text-sm font-medium text-foreground">
                                 {r.requirement}
                               </div>
-                              <div className="text-xs opacity-70">
+                              <div className="text-xs text-foreground/60">
                                 must:{r.mustHave ? "✓" : "—"} • weight:
                                 {r.weight} • sim:
                                 {(r.similarity * 100).toFixed(1)}% • score:
