@@ -12,32 +12,37 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
+/**
+ * Fonts:
+ * - نستخدم next/font لحقن متغيرات CSS (بدون FOUT)
+ * - متوافقة مع المتغيرات المستخدمة في globals.css
+ */
 const display = PlusJakartaSans({
-  subsets: ["latin"],
-  display: "swap",
   variable: "--font-display",
-  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  display: "swap",
 });
 
 const sans = PlusJakartaSans({
-  subsets: ["latin"],
-  display: "swap",
   variable: "--font-sans",
+  subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const arabic = Tajawal({
-  subsets: ["arabic"],
-  display: "swap",
   variable: "--font-arabic",
+  subsets: ["arabic"],
   weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 const mono = JetBrainsMono({
-  subsets: ["latin"],
-  display: "swap",
   variable: "--font-mono",
+  subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -95,13 +100,11 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider>
-          <a
-            href="#main"
-            className="skip-link"
-          >
+          <a href="#main" className="skip-link">
             تخط إلى المحتوى / Skip to content
           </a>
 
+          {/* خلفيات زخرفية لطيفة */}
           <div className="pointer-events-none fixed inset-0 -z-30">
             <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(82,109,255,0.18),transparent_45%),radial-gradient(140%_140%_at_0%_100%,rgba(56,189,248,0.16),transparent_50%)]" />
             <div
@@ -123,10 +126,7 @@ export default function RootLayout({
           <div className="relative z-10 flex min-h-dvh flex-col">
             <Topbar />
 
-            <main
-              id="main"
-              className="relative z-10 flex-1 pb-24 pt-10"
-            >
+            <main id="main" className="relative z-10 flex-1 pb-24 pt-10">
               <div className="container">
                 <div className="mx-auto w-full max-w-6xl space-y-12 md:space-y-16">
                   {children}
@@ -140,7 +140,10 @@ export default function RootLayout({
                   <div className="flex items-center gap-4">
                     <div className="relative flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-[0_18px_45px_-30px_rgba(59,130,246,0.85)]">
                       <span className="text-xl">⚡</span>
-                      <span className="absolute inset-0 rounded-2xl bg-white/30 opacity-0 transition-opacity duration-500 group-hover:opacity-40" aria-hidden />
+                      <span
+                        className="absolute inset-0 rounded-2xl bg-white/30 opacity-0 transition-opacity duration-500 group-hover:opacity-40"
+                        aria-hidden
+                      />
                     </div>
                     <div className="space-y-1 text-start">
                       <p className="font-display text-sm font-semibold tracking-[0.18em] text-foreground/70">

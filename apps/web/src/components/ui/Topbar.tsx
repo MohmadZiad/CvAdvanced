@@ -76,7 +76,6 @@ export default function Topbar() {
   const toggleTheme = React.useCallback(() => {
     const next = (isDark ? "light" : "dark") as "light" | "dark";
     setTheme(next);
-
     if (typeof window !== "undefined") {
       window.localStorage.setItem("theme", next);
       window.dispatchEvent(new CustomEvent("theme-change", { detail: next === "dark" }));
@@ -88,6 +87,7 @@ export default function Topbar() {
       <header className="sticky top-0 z-50 pb-4">
         <div className="container">
           <div className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_24px_55px_-40px_rgba(30,41,59,0.55)] transition-colors supports-[backdrop-filter]:backdrop-blur-[28px] dark:border-white/10 dark:bg-white/10 dark:shadow-[0_24px_55px_-38px_rgba(2,6,23,0.75)]">
+            {/* خلفية تفاعلية خفيفة */}
             <div className="pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-secondary/20" />
               <motion.div
@@ -98,6 +98,7 @@ export default function Topbar() {
               />
             </div>
 
+            {/* علامة وبراندينغ */}
             <div className="flex items-center gap-4">
               <div className="relative flex size-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-[0_20px_45px_-30px_rgba(59,130,246,0.85)]">
                 <Sparkles size={18} />
@@ -114,9 +115,7 @@ export default function Topbar() {
                   <p className="font-display text-lg font-semibold tracking-tight text-foreground dark:text-white">
                     {strings.brand}
                   </p>
-                  <span className="chip hidden md:inline-flex">
-                    {strings.beta}
-                  </span>
+                  <span className="chip hidden md:inline-flex">{strings.beta}</span>
                 </div>
                 <p className="max-w-[26rem] text-xs text-foreground/60 dark:text-white/60 md:text-sm">
                   {strings.tagline}
@@ -124,7 +123,9 @@ export default function Topbar() {
               </div>
             </div>
 
+            {/* أدوات: اللغة + الثيم */}
             <div className="flex items-center gap-2">
+              {/* لغة */}
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                   <Button variant="glass" size="sm" className="gap-3 px-4 py-2.5">
@@ -157,7 +158,6 @@ export default function Topbar() {
                       {LANG_OPTIONS.map((option) => {
                         const active = option.value === lang;
                         const description = option.description[lang];
-
                         return (
                           <DropdownMenu.Item
                             key={option.value}
@@ -168,9 +168,7 @@ export default function Topbar() {
                             )}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-semibold">
-                                {option.label}
-                              </span>
+                              <span className="text-sm font-semibold">{option.label}</span>
                               <span
                                 className={cn(
                                   "rounded-full px-2 py-[2px] text-[10px] font-semibold uppercase tracking-[0.3em]",
@@ -203,6 +201,7 @@ export default function Topbar() {
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
 
+              {/* ثيم */}
               <Tooltip.Root>
                 <Tooltip.Trigger asChild>
                   <Button variant="glass" size="sm" className="gap-3 px-4 py-2.5" onClick={toggleTheme}>

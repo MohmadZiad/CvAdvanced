@@ -40,6 +40,34 @@
   --font-sans: var(--font-display);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 9 10 15;
+    --foreground: 226 232 240;
+
+    --base: 17 21 31;
+    --base-foreground: 226 232 240;
+
+    --muted: 33 38 55;
+    --muted-foreground: 148 163 184;
+
+    --primary: 59 130 246;
+    --primary-foreground: 241 245 249;
+
+    --secondary: 129 86 255;
+    --secondary-foreground: 241 245 249;
+
+    --accent: 45 212 191;
+    --accent-foreground: 8 47 73;
+
+    --border: 42 51 70;
+    --input: 51 65 85;
+    --ring: 96 165 250;
+
+    --shadow-soft: 0 14px 65px -20px rgba(2, 6, 23, 0.65);
+  }
+}
+
 .dark {
   --background: 11 11 16;
   --foreground: 226 232 240;
@@ -162,11 +190,7 @@ html[lang="ar"] body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(99, 102, 241, 0.7),
-    rgba(56, 189, 248, 0.55)
-  );
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.7), rgba(56, 189, 248, 0.55));
   border-radius: 999px;
 }
 
@@ -291,8 +315,7 @@ html[lang="ar"] body {
 }
 
 @keyframes softPulse {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 0.65;
   }
   50% {

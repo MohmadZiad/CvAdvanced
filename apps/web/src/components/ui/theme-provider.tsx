@@ -17,11 +17,8 @@ const LangContext = React.createContext<LangContextValue | undefined>(undefined)
 function getInitialLang(): Lang {
   if (typeof document !== "undefined") {
     const attribute = document.documentElement.getAttribute("lang");
-    if (attribute === "ar" || attribute === "en") {
-      return attribute;
-    }
+    if (attribute === "ar" || attribute === "en") return attribute as Lang;
   }
-
   return "ar";
 }
 
@@ -44,15 +41,9 @@ export function ThemeProvider({ children, ...props }: Props) {
   }, []);
 
   const persistAndEmit = React.useCallback((next: Lang) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
+    if (typeof window === "undefined") return;
     const storage = window.localStorage;
-    if (storage.getItem("lang") !== next) {
-      storage.setItem("lang", next);
-    }
-
+    if (storage.getItem("lang") !== next) storage.setItem("lang", next);
     window.dispatchEvent(new CustomEvent<Lang>("lang-change", { detail: next }));
   }, []);
 
@@ -62,7 +53,6 @@ export function ThemeProvider({ children, ...props }: Props) {
         updateDom(next);
         return;
       }
-
       langRef.current = next;
       setLangState(next);
       updateDom(next);
@@ -76,9 +66,7 @@ export function ThemeProvider({ children, ...props }: Props) {
   }, [lang]);
 
   React.useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
     const storageValue = (window.localStorage.getItem("lang") as Lang | null) ?? langRef.current;
     const domValue = (document.documentElement.getAttribute("lang") as Lang | null) ?? storageValue;
@@ -89,15 +77,9 @@ export function ThemeProvider({ children, ...props }: Props) {
     updateDom(initial);
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== "lang" || !event.newValue) {
-        return;
-      }
-
+      if (event.key !== "lang" || !event.newValue) return;
       const value = event.newValue === "ar" || event.newValue === "en" ? (event.newValue as Lang) : "ar";
-      if (langRef.current === value) {
-        return;
-      }
-
+      if (langRef.current === value) return;
       langRef.current = value;
       setLangState(value);
       updateDom(value);
@@ -106,10 +88,7 @@ export function ThemeProvider({ children, ...props }: Props) {
     const handleCustom = (event: Event) => {
       const custom = event as CustomEvent<Lang>;
       const value = custom.detail;
-      if (!value || (value !== "ar" && value !== "en") || langRef.current === value) {
-        return;
-      }
-
+      if (!value || (value !== "ar" && value !== "en") || langRef.current === value) return;
       langRef.current = value;
       setLangState(value);
       updateDom(value);
@@ -117,7 +96,6 @@ export function ThemeProvider({ children, ...props }: Props) {
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener("lang-change", handleCustom as EventListener);
-
     return () => {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("lang-change", handleCustom as EventListener);
@@ -134,7 +112,7 @@ export function ThemeProvider({ children, ...props }: Props) {
         enableSystem
         defaultTheme="system"
         disableTransitionOnChange
-        themes={['light', 'dark']}
+        themes={["light", "dark"]}
         {...props}
       >
         {children}
@@ -145,9 +123,6 @@ export function ThemeProvider({ children, ...props }: Props) {
 
 export function useLang() {
   const context = React.useContext(LangContext);
-  if (!context) {
-    throw new Error("useLang must be used within ThemeProvider");
-  }
-
+  if (!context) throw new Error("useLang must be used within ThemeProvider");
   return context;
 }

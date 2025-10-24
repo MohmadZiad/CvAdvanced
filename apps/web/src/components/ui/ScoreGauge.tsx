@@ -10,14 +10,8 @@ type Props = {
 };
 
 const LABELS: Record<Lang, { heading: string; sub: string }> = {
-  ar: {
-    heading: "نتيجة التطابق",
-    sub: "من 10",
-  },
-  en: {
-    heading: "Match score",
-    sub: "out of 10",
-  },
+  ar: { heading: "نتيجة التطابق", sub: "من 10" },
+  en: { heading: "Match score", sub: "out of 10" },
 };
 
 export default function ScoreGauge({ value, size = 160 }: Props) {
@@ -30,6 +24,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
   const gradientId = React.useId();
   const glowId = React.useId();
 
+  // مزامنة اللغة مع <html lang="...">
   const [lang, setLang] = React.useState<Lang>(() => {
     if (typeof document !== "undefined") {
       const attribute = document.documentElement.getAttribute("lang");
@@ -39,17 +34,11 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
   });
 
   React.useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
     const update = (next?: Lang | null) => {
       const resolved = next ?? ((document.documentElement.getAttribute("lang") as Lang | null) ?? "ar");
-      if (resolved !== "ar" && resolved !== "en") {
-        return;
-      }
-
-      setLang((prev) => (prev === resolved ? prev : resolved));
+      if (resolved === "ar" || resolved === "en") setLang((prev) => (prev === resolved ? prev : resolved));
     };
 
     update();
@@ -60,20 +49,18 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === "lang" && event.newValue) {
-        update(event.newValue as Lang);
-      }
+      if (event.key === "lang" && event.newValue) update(event.newValue as Lang);
     };
 
     window.addEventListener("lang-change", handleLangEvent as EventListener);
     window.addEventListener("storage", handleStorage);
-
     return () => {
       window.removeEventListener("lang-change", handleLangEvent as EventListener);
       window.removeEventListener("storage", handleStorage);
     };
   }, []);
 
+  // Ticks حول الدائرة
   const ticks = React.useMemo(() => {
     const segments = 40;
     return Array.from({ length: segments }).map((_, index) => {
@@ -102,6 +89,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
       className="relative isolate flex w-full max-w-xs flex-col items-center justify-center gap-4"
       style={{ width: size + 24 }}
     >
+      {/* خلفية ناعمة */}
       <div
         aria-hidden
         className="absolute inset-0 -z-20 rounded-[48px] bg-gradient-to-br from-primary/20 via-secondary/15 to-transparent blur-3xl"
@@ -129,6 +117,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
             </filter>
           </defs>
 
+          {/* Ticks */}
           <g strokeLinecap="round">
             {ticks.map((tick) => (
               <line
@@ -143,6 +132,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
             ))}
           </g>
 
+          {/* المسار الخلفي */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -152,6 +142,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
             fill="none"
           />
 
+          {/* التقدّم */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -167,6 +158,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
           />
         </svg>
 
+        {/* الرقم في المركز */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="font-semibold text-4xl tracking-tight text-foreground md:text-[2.8rem]">
             {score}
@@ -180,6 +172,7 @@ export default function ScoreGauge({ value, size = 160 }: Props) {
         />
       </div>
 
+      {/* عناوين تحت العداد */}
       <div className="flex flex-col items-center gap-1 text-center">
         <span className="text-sm font-semibold text-foreground dark:text-white">{labels.heading}</span>
         <span className="text-[0.7rem] uppercase tracking-[0.35em] text-foreground/50 dark:text-white/50">

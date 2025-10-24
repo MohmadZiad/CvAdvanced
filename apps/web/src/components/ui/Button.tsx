@@ -71,7 +71,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        <span className={cn("flex items-center gap-2", loading && "opacity-0")}>{children}</span>
+        <span className={cn("flex items-center gap-2", loading && "opacity-0")}>
+          {children}
+        </span>
         {loading && (
           <span className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="size-4 animate-spin" aria-hidden />
