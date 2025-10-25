@@ -86,13 +86,13 @@ export default function Topbar() {
     <Tooltip.Provider delayDuration={120} skipDelayDuration={0} disableHoverableContent>
       <header className="sticky top-0 z-50 pb-4">
         <div className="container">
-          <div className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_24px_55px_-40px_rgba(30,41,59,0.55)] transition-colors supports-[backdrop-filter]:backdrop-blur-[28px] dark:border-white/10 dark:bg-white/10 dark:shadow-[0_24px_55px_-38px_rgba(2,6,23,0.75)]">
+          <div className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-[2.25rem] border border-border/60 bg-card/85 px-5 py-4 shadow-soft transition-colors supports-[backdrop-filter]:backdrop-blur-[28px] dark:border-border/40 dark:bg-card/60">
             {/* خلفية تفاعلية خفيفة */}
             <div className="pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-secondary/20" />
               <motion.div
                 aria-hidden
-                className="absolute left-1/2 top-[-40%] h-56 w-56 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/20 via-secondary/20 to-transparent blur-3xl"
+                className="absolute left-1/2 top-[-40%] h-56 w-56 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/22 via-secondary/20 to-transparent blur-3xl"
                 animate={{ rotate: [0, 12, -8, 0] }}
                 transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
               />
@@ -100,7 +100,7 @@ export default function Topbar() {
 
             {/* علامة وبراندينغ */}
             <div className="flex items-center gap-4">
-              <div className="relative flex size-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-[0_20px_45px_-30px_rgba(59,130,246,0.85)]">
+              <div className="relative flex size-12 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-[0_20px_45px_-30px_rgba(249,115,22,0.55)]">
                 <Sparkles size={18} />
                 <motion.span
                   aria-hidden
@@ -117,7 +117,7 @@ export default function Topbar() {
                   </p>
                   <span className="chip hidden md:inline-flex">{strings.beta}</span>
                 </div>
-                <p className="max-w-[26rem] text-xs text-foreground/60 dark:text-white/60 md:text-sm">
+                <p className="max-w-[26rem] text-xs text-foreground/60 dark:text-foreground/70 md:text-sm">
                   {strings.tagline}
                 </p>
               </div>
@@ -149,7 +149,7 @@ export default function Topbar() {
                   <DropdownMenu.Content
                     sideOffset={12}
                     align="end"
-                    className="z-50 min-w-[220px] overflow-hidden rounded-2xl border border-border/50 bg-white/85 p-1.5 shadow-[0_32px_65px_-38px_rgba(30,41,59,0.55)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/10 dark:shadow-[0_28px_65px_-36px_rgba(2,6,23,0.75)]"
+                    className="z-50 min-w-[220px] overflow-hidden rounded-2xl border border-border/60 bg-card/90 p-1.5 shadow-soft backdrop-blur-2xl dark:border-border/40 dark:bg-card/60"
                   >
                     <DropdownMenu.Label className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-foreground/50 dark:text-white/50">
                       {strings.language}
@@ -163,8 +163,8 @@ export default function Topbar() {
                             key={option.value}
                             onSelect={() => setLang(option.value)}
                             className={cn(
-                              "relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 text-start text-xs font-medium text-foreground/70 outline-none transition hover:bg-foreground/5 hover:text-foreground focus:bg-foreground/5 focus:text-foreground dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white",
-                              active && "text-primary dark:text-primary-foreground",
+                              "relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 text-start text-xs font-medium text-foreground/70 outline-none transition hover:bg-primary/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-foreground/80 dark:hover:bg-primary/10",
+                              active && "text-primary",
                             )}
                           >
                             <div className="flex items-center justify-between">
@@ -174,7 +174,7 @@ export default function Topbar() {
                                   "rounded-full px-2 py-[2px] text-[10px] font-semibold uppercase tracking-[0.3em]",
                                   active
                                     ? "bg-primary/20 text-primary"
-                                    : "bg-foreground/5 text-foreground/50 dark:bg-white/10 dark:text-white/50",
+                                    : "bg-muted/60 text-muted-foreground dark:bg-muted/30",
                                 )}
                               >
                                 {option.badge}
@@ -185,7 +185,7 @@ export default function Topbar() {
                               {active && (
                                 <motion.span
                                   layoutId="lang-active-glow"
-                                  className="pointer-events-none absolute inset-0 -z-10 rounded-xl bg-primary/10 dark:bg-primary/20"
+                                  className="pointer-events-none absolute inset-0 -z-10 rounded-xl bg-primary/10"
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
@@ -241,11 +241,11 @@ export default function Topbar() {
                     <motion.span
                       aria-hidden
                       layoutId="topbar-theme-indicator"
-                      className="absolute inset-x-3 bottom-1 h-px rounded-full bg-gradient-to-r from-transparent via-accent/60 to-transparent"
+                      className="absolute inset-x-3 bottom-1 h-px rounded-full bg-gradient-to-r from-transparent via-primary/50 to-transparent"
                     />
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content className="rounded-lg border border-border/40 bg-white/90 px-3 py-1 text-xs shadow backdrop-blur dark:border-white/10 dark:bg-slate-900/80">
+                <Tooltip.Content className="rounded-lg border border-border/50 bg-card/90 px-3 py-1 text-xs text-foreground shadow backdrop-blur dark:border-border/40 dark:bg-card/60">
                   {strings.themeTooltip}
                 </Tooltip.Content>
               </Tooltip.Root>

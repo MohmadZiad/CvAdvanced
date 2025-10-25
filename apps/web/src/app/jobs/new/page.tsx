@@ -51,6 +51,7 @@ export default function NewJob() {
             placeholder="مثال: Senior React Engineer"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            dir="auto"
           />
         </div>
 
@@ -64,6 +65,7 @@ export default function NewJob() {
             rows={6}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            dir="auto"
           />
           <p className="text-xs text-muted-foreground">
             سيمكنك لاحقًا توليد المتطلبات تلقائيًا من الوصف.
@@ -71,7 +73,7 @@ export default function NewJob() {
         </div>
       </section>
 
-      <section className="mt-8 rounded-2xl border bg-white/50 p-4 shadow-sm backdrop-blur">
+      <section className="mt-8 rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur dark:border-border/40 dark:bg-card/40">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">المتطلبات</h2>
           <Button onClick={addReq} type="button">
@@ -81,7 +83,7 @@ export default function NewJob() {
 
         <div className="grid gap-3">
           {reqs.length === 0 && (
-            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-border/50 bg-card/70 p-6 text-center text-sm text-muted-foreground dark:border-border/40 dark:bg-card/40">
               لا توجد متطلبات بعد — أضف أول متطلب.
             </div>
           )}
@@ -89,7 +91,7 @@ export default function NewJob() {
           {reqs.map((r, idx) => (
             <div
               key={idx}
-              className="rounded-xl border p-3 shadow-sm transition hover:shadow-md"
+              className="rounded-xl border border-border/50 bg-card/85 p-3 shadow-sm transition hover:shadow-md dark:border-border/40 dark:bg-card/50"
             >
               <div className="grid gap-3 md:grid-cols-12 md:items-center">
                 <div className="md:col-span-6">
@@ -106,7 +108,7 @@ export default function NewJob() {
                   <input
                     id={`must-${idx}`}
                     type="checkbox"
-                    className="h-4 w-4 accent-black"
+                    className="h-4 w-4 accent-primary"
                     checked={r.mustHave}
                     onChange={(e) =>
                       updateReq(idx, { mustHave: e.target.checked })
@@ -124,7 +126,7 @@ export default function NewJob() {
                     type="number"
                     step="0.1"
                     min={0}
-                    className="w-24 rounded-md border px-2 py-1"
+                    className="w-24 rounded-md border border-border/50 bg-card/90 px-2 py-1 text-sm text-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-border/40 dark:bg-card/50"
                     value={r.weight}
                     onChange={(e) =>
                       updateReq(idx, { weight: Number(e.target.value) })

@@ -36,8 +36,8 @@ export default function RunAnalysis() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <header className="relative overflow-hidden rounded-[2rem] border border-border/40 bg-white/75 px-6 py-8 shadow-soft backdrop-blur dark:bg-white/10">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(55%_120%_at_0%_0%,rgba(37,99,235,0.18),transparent),radial-gradient(45%_110%_at_100%_100%,rgba(139,92,246,0.16),transparent)]" />
+      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-card/85 px-6 py-8 shadow-soft backdrop-blur dark:border-border/40 dark:bg-card/50">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_120%_at_0%_0%,rgba(249,115,22,0.18),transparent),radial-gradient(50%_120%_at_100%_100%,rgba(255,189,135,0.16),transparent)]" />
         <p className="text-xs uppercase tracking-[0.32em] text-foreground/50">Orchestrate Analysis</p>
         <h1 className="mt-3 text-3xl font-semibold text-foreground">تشغيل التحليل</h1>
         <p className="mt-2 max-w-xl text-sm text-foreground/60">
@@ -51,14 +51,14 @@ export default function RunAnalysis() {
         </div>
       )}
 
-      <div className="rounded-[2rem] border border-border/40 bg-white/80 p-6 shadow-soft backdrop-blur dark:bg-white/10">
+      <div className="rounded-[2rem] border border-border/60 bg-card/80 p-6 shadow-soft backdrop-blur dark:border-border/40 dark:bg-card/40">
         <div className="grid gap-5">
           <div className="grid gap-2">
             <label className="text-xs uppercase tracking-[0.28em] text-foreground/50">CV</label>
             <select
               value={cvId}
               onChange={(e) => setCvId(e.target.value)}
-              className="w-full rounded-2xl border border-border/60 bg-white/95 px-4 py-3 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
+              className="w-full rounded-2xl border border-border/60 bg-card/90 px-4 py-3 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-border/40 dark:bg-card/50"
             >
               <option value="">— اختر CV —</option>
               {cvs.map((c: any) => (
@@ -79,7 +79,7 @@ export default function RunAnalysis() {
             <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
-              className="w-full rounded-2xl border border-border/60 bg-white/95 px-4 py-3 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
+              className="w-full rounded-2xl border border-border/60 bg-card/90 px-4 py-3 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-border/40 dark:bg-card/50"
             >
               <option value="">— اختر وظيفة —</option>
               {jobs.map((j: any) => (
@@ -95,7 +95,7 @@ export default function RunAnalysis() {
             )}
           </div>
 
-          <div className="flex items-center justify-between rounded-2xl border border-border/40 bg-white/80 px-4 py-3 text-xs uppercase tracking-[0.3em] text-foreground/50 dark:bg-white/5">
+          <div className="flex items-center justify-between rounded-2xl border border-border/50 bg-muted/70 px-4 py-3 text-xs uppercase tracking-[0.3em] text-muted-foreground dark:border-border/40 dark:bg-muted/30">
             <span>متطلبات كاملة • لا تغيير في المنطق</span>
             <span>⚡ 10 ثواني تقريبًا</span>
           </div>

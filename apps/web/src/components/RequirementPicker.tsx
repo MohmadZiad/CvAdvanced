@@ -175,10 +175,11 @@ export default function RequirementPicker({ onAdd }: Props) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="ابحث عن React، DevOps…"
-          className="h-11 rounded-xl bg-white/90 dark:bg-white/10"
+          className="h-11 rounded-xl"
+          dir="auto"
         />
 
-        <label className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-white/80 px-3 py-2 text-xs font-medium text-foreground/70 shadow-sm transition hover:border-border hover:bg-white dark:bg-white/10">
+        <label className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/80 px-3 py-2 text-xs font-medium text-foreground/70 shadow-sm transition hover:border-border hover:bg-card/90 dark:border-border/40 dark:bg-card/50">
           <input
             type="checkbox"
             checked={must}
@@ -188,7 +189,7 @@ export default function RequirementPicker({ onAdd }: Props) {
           must
         </label>
 
-        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-white/80 px-3 py-2 shadow-sm dark:bg-white/10">
+        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/80 px-3 py-2 shadow-sm dark:border-border/40 dark:bg-card/50">
           {WEIGHTS.map((w) => (
             <Button
               key={w.value}
@@ -206,7 +207,7 @@ export default function RequirementPicker({ onAdd }: Props) {
         </div>
       </div>
 
-      <ScrollArea.Root className="mt-5 h-48 w-full overflow-hidden rounded-2xl border border-border/50 bg-white/70 shadow-inner dark:bg-white/5">
+      <ScrollArea.Root className="mt-5 h-48 w-full overflow-hidden rounded-2xl border border-border/50 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] dark:border-border/40 dark:bg-card/40">
         <ScrollArea.Viewport className="h-full w-full p-3">
           <div className="grid grid-cols-2 gap-2">
             {list.map((item) => (
@@ -215,7 +216,7 @@ export default function RequirementPicker({ onAdd }: Props) {
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onAdd({ requirement: item, mustHave: must, weight })}
-                className="group flex h-[58px] flex-col justify-center rounded-xl border border-border/50 bg-white/90 px-3 text-start text-xs font-medium text-foreground/80 transition hover:border-primary/40 hover:bg-primary/5 dark:bg-white/10"
+                className="group flex h-[58px] flex-col justify-center rounded-xl border border-border/50 bg-card/85 px-3 text-start text-xs font-medium text-foreground/80 transition hover:border-primary/40 hover:bg-primary/5 dark:border-border/40 dark:bg-card/50"
               >
                 <span>{item}</span>
                 <span className="mt-1 flex items-center gap-1 text-[10px] uppercase tracking-[0.25em] text-foreground/40">
