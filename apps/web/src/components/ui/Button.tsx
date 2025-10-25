@@ -5,20 +5,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight text-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] supports-[backdrop-filter]:backdrop-blur-xl",
+  "group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight text-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] supports-[backdrop-filter]:backdrop-blur-xl",
   {
     variants: {
       variant: {
         primary:
-          "text-white shadow-[0_28px_55px_-32px_rgba(59,130,246,0.8)] bg-[linear-gradient(135deg,rgba(99,102,241,0.98),rgba(59,130,246,0.9))] hover:shadow-[0_36px_70px_-34px_rgba(59,130,246,0.9)]",
+          "text-primary-foreground shadow-[0_28px_55px_-32px_rgba(249,115,22,0.55)] bg-[linear-gradient(135deg,rgba(249,115,22,0.98),rgba(214,121,59,0.95))] hover:shadow-[0_34px_70px_-34px_rgba(214,121,59,0.6)]",
         secondary:
-          "border border-white/80 bg-white/80 text-foreground/80 shadow-[0_18px_48px_-36px_rgba(30,41,59,0.45)] hover:bg-white/95 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/15 dark:shadow-[0_18px_60px_-38px_rgba(2,6,23,0.7)]",
+          "border border-border/60 bg-card/80 text-foreground/80 shadow-[0_18px_48px_-36px_rgba(88,47,16,0.28)] hover:bg-card/95 hover:text-foreground dark:border-border/40 dark:bg-card/50 dark:text-foreground/80 dark:hover:bg-card/60",
         ghost:
-          "border border-transparent bg-transparent text-foreground/70 hover:border-foreground/10 hover:bg-foreground/5 hover:text-foreground dark:text-white/70 dark:hover:bg-white/10",
+          "border border-transparent bg-transparent text-foreground/70 hover:border-primary/15 hover:bg-primary/5 hover:text-foreground dark:text-foreground/75 dark:hover:bg-primary/10",
         glass:
-          "border border-white/60 bg-white/55 text-foreground shadow-[0_22px_55px_-40px_rgba(30,41,59,0.55)] hover:border-white/80 hover:bg-white/75 dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 dark:shadow-[0_22px_65px_-42px_rgba(2,6,23,0.75)]",
+          "border border-border/50 bg-card/80 text-foreground shadow-[0_22px_55px_-40px_rgba(88,47,16,0.32)] hover:border-border/40 hover:bg-card/90 dark:border-border/40 dark:bg-card/40 dark:text-foreground",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[0_26px_55px_-32px_rgba(239,68,68,0.7)] hover:brightness-[1.05]",
+          "bg-destructive text-destructive-foreground shadow-[0_26px_55px_-32px_rgba(220,38,38,0.55)] hover:brightness-[1.05]",
       },
       size: {
         xs: "h-8 px-3 text-xs",

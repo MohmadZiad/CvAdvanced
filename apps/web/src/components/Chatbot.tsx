@@ -1,334 +1,338 @@
-// =============================
-// apps/web/src/components/Chatbot.tsx
-// =============================
 "use client";
 
-import {
-  useEffect as useEffect2,
-  useMemo as useMemo2,
-  useState as useState2,
-} from "react";
-import {
-  AnimatePresence as AnimatePresence2,
-  motion as motion2,
-} from "framer-motion";
-import {
-  MessageCircle,
-  X as X2,
-  Play as Play2,
-  Loader2 as Loader22,
-  Wand2 as Wand22,
-} from "lucide-react";
-import ScoreGauge from "./ui/ScoreGauge";
-import { type Lang as Lang2, t as t2 } from "@/lib/i18n";
-import { cvApi as cvApi2 } from "@/services/api/cv";
-import { jobsApi as jobsApi2 } from "@/services/api/jobs";
-import {
-  analysesApi as analysesApi2,
-  type Analysis as Analysis2,
-} from "@/services/api/analyses";
-import { Button as Button2 } from "@/components/ui/Button";
+import * as React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { useLang } from "@/components/ui/theme-provider";
+import { t } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
-// Shape
-type Msg2 = { role: "bot" | "user" | "sys"; text: string };
+import type { Lang } from "@/components/ui/theme-provider";
 
-function getLangFromStorage2(): Lang2 {
-  try {
-    if (typeof window !== "undefined") {
-      return (window.localStorage.getItem("lang") as Lang2) || "ar";
-    }
-  } catch {}
-  return "ar";
-}
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  streaming?: boolean;
+};
+
+type Suggestion = { label: string; prompt: string };
+
+const SYSTEM_PROMPT: Record<Lang, string> = {
+  ar: "أنت مساعد مطابقة سير ذاتية متاح باللغة العربية. كن ودودًا، عمليًا، وقدّم إجابات موجزة مدعومة بخطوات قابلة للتنفيذ. استخدم نقطًا عند الحاجة واجعل النبرة مهنية مشجعة.",
+  en: "You are a CV matching copilot. Respond in a warm, professional tone with concise, actionable guidance. Use short paragraphs or bullets when helpful.",
+};
+
+const SUGGESTION_PRESETS: Record<Lang, Suggestion[]> = {
+  ar: [
+    {
+      label: "اقترح متطلبات لهذه الوظيفة",
+      prompt:
+        "أحتاج إلى مسودة متطلبات للوظيفة التي أعمل عليها الآن. اصنع قائمة قصيرة من المهارات والخبرات الأساسية مرتبة بالأهمية.",
+    },
+    {
+      label: "حلل الـCV وأعطني نقاط القوة",
+      prompt:
+        "حلّل السير الذاتية التي أراجعها وحدد أبرز نقاط القوة التي يمكن إبرازها أثناء المقابلة أو في بريد المتابعة.",
+    },
+    {
+      label: "قارن الـCV مع React + TypeScript",
+      prompt:
+        "قارن مهارات المرشح الحالية مع متطلبات وظيفة تعتمد على React وTypeScript، واشرح الفجوات وكيف يمكن سدّها.",
+    },
+  ],
+  en: [
+    {
+      label: "Draft job requirements",
+      prompt:
+        "Draft a concise list of job requirements for the role I am hiring for. Prioritize core technical and collaboration skills.",
+    },
+    {
+      label: "Summarise CV strengths",
+      prompt:
+        "Review the candidate profile and list the top strengths I should highlight during interview debriefs.",
+    },
+    {
+      label: "Gap check for React + TS",
+      prompt:
+        "Compare the candidate's experience against a React + TypeScript position. Point out gaps and suggest how to close them.",
+    },
+  ],
+};
+
+const INITIAL_ID = "assistant-intro";
 
 export default function Chatbot() {
-  const [open, setOpen] = useState2(false);
-  const [lang, setLang] = useState2<Lang2>("ar");
-  const tt = useMemo2(() => (p: string) => t2(lang, p), [lang]);
+  const { lang } = useLang();
+  const suggestions = React.useMemo(() => SUGGESTION_PRESETS[lang], [lang]);
 
-  useEffect2(() => {
-    setLang(getLangFromStorage2());
-    const onStorage = () => setLang(getLangFromStorage2());
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+  const [open, setOpen] = React.useState(false);
+  const [input, setInput] = React.useState("");
+  const [messages, setMessages] = React.useState<ChatMessage[]>(() => [
+    {
+      id: INITIAL_ID,
+      role: "assistant",
+      content: t(lang, "chat.hello"),
+    },
+  ]);
+  const [isStreaming, setIsStreaming] = React.useState(false);
+
+  const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  const messagesRef = React.useRef<ChatMessage[]>(messages);
+  const streamingRef = React.useRef(false);
+
+  React.useEffect(() => {
+    messagesRef.current = messages;
+    if (!open) return;
+    requestAnimationFrame(() => {
+      const el = listRef.current;
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    });
+  }, [messages, open]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => inputRef.current?.focus(), 140);
+    return () => window.clearTimeout(id);
+  }, [open, lang]);
+
+  React.useEffect(() => {
+    setMessages([
+      {
+        id: INITIAL_ID,
+        role: "assistant",
+        content: t(lang, "chat.hello"),
+      },
+    ]);
+  }, [lang]);
+
+  const appendMessage = React.useCallback((message: ChatMessage) => {
+    setMessages((prev) => [...prev, message]);
   }, []);
 
-  const [msgs, setMsgs] = useState2<Msg2[]>([
-    { role: "bot", text: tt("chat.hello") },
-  ]);
-  const [cvs, setCvs] = useState2<any[]>([]);
-  const [jobs, setJobs] = useState2<any[]>([]);
-  const [cvId, setCvId] = useState2("");
-  const [jobId, setJobId] = useState2("");
-  const [jd, setJd] = useState2("");
-  const [loading, setLoading] = useState2(false);
-  const [suggesting, setSuggesting] = useState2(false);
-  const [result, setResult] = useState2<Analysis2 | null>(null);
+  const updateMessage = React.useCallback((id: string, updater: (current: ChatMessage) => ChatMessage) => {
+    setMessages((prev) => prev.map((msg) => (msg.id === id ? updater(msg) : msg)));
+  }, []);
 
-  useEffect2(() => {
-    if (!open) return;
-    cvApi2
-      .list()
-      .then((r) => setCvs(r.items))
-      .catch(() => {});
-    jobsApi2
-      .list()
-      .then((r) => setJobs(r.items))
-      .catch(() => {});
-  }, [open]);
+  const sendMessage = React.useCallback(
+    async (raw: string) => {
+      const content = raw.trim();
+      if (!content || streamingRef.current) return;
 
-  const handleSuggest = async () => {
-    if (!jd.trim()) return;
-    try {
-      setSuggesting(true);
-      const r = await jobsApi2.suggestFromJD(jd);
-      setMsgs((m) => [
-        ...m,
-        {
-          role: "bot",
-          text:
-            `✅ ${tt("chat.aiSuggested")}:\n– ` +
-            r.items
-              .map(
-                (i) =>
-                  `${i.requirement}${i.mustHave ? " (must)" : ""} • w${i.weight}`
-              )
-              .join("\n– "),
-        },
-      ]);
-    } catch (e: any) {
-      setMsgs((m) => [...m, { role: "bot", text: `AI Error: ${e.message}` }]);
-    } finally {
-      setSuggesting(false);
-    }
-  };
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content,
+      };
 
-  const run = async () => {
-    if (!cvId || !jobId) return;
-    setLoading(true);
-    setResult(null);
-    setMsgs((m) => [...m, { role: "user", text: `${tt("chat.run")} ▶️` }]);
-    try {
-      const a = await analysesApi2.run({ jobId, cvId });
-      const score = Number(a.score ?? 0);
-      setResult(a);
-      setMsgs((m) => [
-        ...m,
-        {
-          role: "bot",
-          text: `${tt("chat.done")} • ${tt("chat.score")}: ${score.toFixed(2)}`,
-        },
-      ]);
-    } catch (e: any) {
-      setMsgs((m) => [...m, { role: "bot", text: `Error: ${e.message}` }]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      appendMessage(userMessage);
+      setInput("");
+
+      const assistantId = crypto.randomUUID();
+      appendMessage({ id: assistantId, role: "assistant", content: "", streaming: true });
+
+      const history = [...messagesRef.current, userMessage]
+        .filter((item) => item.role !== "system")
+        .slice(-10)
+        .map((item) => ({
+          role: item.role === "assistant" ? "assistant" : "user",
+          content: item.content,
+        }));
+
+      try {
+        streamingRef.current = true;
+        setIsStreaming(true);
+
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lang,
+            intent: "chat",
+            messages: [{ role: "system", content: SYSTEM_PROMPT[lang] }, ...history],
+          }),
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error(response.statusText || "network error");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          if (!chunk) continue;
+          updateMessage(assistantId, (current) => ({
+            ...current,
+            content: current.content + chunk,
+          }));
+        }
+
+        updateMessage(assistantId, (current) => ({ ...current, streaming: false }));
+      } catch (error: any) {
+        const fallback =
+          lang === "ar"
+            ? `حدث خطأ أثناء جلب الرد: ${error?.message || "غير معروف"}`
+            : `Unable to complete the request: ${error?.message || "unknown error"}`;
+        updateMessage(assistantId, (current) => ({ ...current, content: fallback, streaming: false }));
+      } finally {
+        streamingRef.current = false;
+        setIsStreaming(false);
+      }
+    },
+    [appendMessage, lang, updateMessage],
+  );
+
+  const handleSubmit = React.useCallback(
+    (event?: React.FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
+      void sendMessage(input);
+    },
+    [input, sendMessage],
+  );
+
+  const handleSuggestion = React.useCallback(
+    (prompt: string) => {
+      void sendMessage(prompt);
+    },
+    [sendMessage],
+  );
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        void sendMessage(input);
+      }
+    },
+    [input, sendMessage],
+  );
 
   return (
     <>
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-indigo-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(600px_250px_at_10%_10%,rgba(99,102,241,.15),transparent_60%),radial-gradient(600px_250px_at_90%_30%,rgba(236,72,153,.15),transparent_60%)]" />
-
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 end-6 z-[60] grid size-14 place-items-center rounded-[1.75rem] bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-[0_20px_45px_-22px_rgba(37,99,235,0.75)] transition hover:scale-105"
-        aria-label="Open Assistant"
+        className="fixed bottom-6 end-6 z-[60] grid size-14 place-items-center rounded-full bg-[linear-gradient(135deg,rgba(249,115,22,0.98),rgba(214,121,59,0.95))] text-primary-foreground shadow-[0_28px_60px_-32px_rgba(249,115,22,0.6)] transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-label={lang === "ar" ? "فتح المساعد" : "Open assistant"}
       >
-        <MessageCircle size={24} />
+        <MessageCircle className="size-6" />
       </button>
 
-      <AnimatePresence2>
+      <AnimatePresence>
         {open && (
-          <motion2.div
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[70] flex items-end justify-end bg-black/35 backdrop-blur-sm"
           >
-            <motion2.div
+            <div className="absolute inset-0" onClick={() => setOpen(false)} aria-hidden />
+            <motion.div
               initial={{ y: 60, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 130, damping: 16 }}
-              className="absolute bottom-0 end-0 m-6 w-[min(520px,calc(100vw-3rem))] overflow-hidden rounded-[2.25rem] border border-border/40 bg-white/85 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:bg-white/10"
+              transition={{ type: "spring", stiffness: 140, damping: 18 }}
+              className="relative m-6 w-[min(520px,calc(100vw-3rem))] overflow-hidden rounded-[2.25rem] border border-border/60 bg-card/90 shadow-soft backdrop-blur-xl dark:border-border/40 dark:bg-card/60"
             >
-              <div className="flex items-center justify-between border-b border-border/50 bg-white/60 px-6 py-4 dark:bg-white/5">
+              <div className="flex items-center justify-between border-b border-border/50 bg-gradient-to-r from-primary/15 via-transparent to-transparent px-6 py-4">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.28em] text-foreground/50">Assistant</div>
-                  <div className="text-sm font-semibold text-foreground">{tt("chat.title")}</div>
+                  <p className="text-xs uppercase tracking-[0.32em] text-foreground/50">
+                    {lang === "ar" ? "مساعد التحليل" : "Analysis assistant"}
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">{t(lang, "chat.title")}</p>
                 </div>
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setOpen(false)}
-                  className="grid size-9 place-items-center rounded-xl border border-transparent bg-white/70 text-foreground/70 transition hover:border-border/70 hover:text-foreground dark:bg-white/5"
+                  className="rounded-xl border border-transparent text-foreground/70 hover:border-border hover:text-foreground"
+                  aria-label={lang === "ar" ? "إغلاق" : "Close"}
                 >
-                  <X2 size={18} />
-                </button>
+                  <X className="size-5" />
+                </Button>
               </div>
 
-              <div className="max-h-[70vh] space-y-4 overflow-auto p-5">
-                {msgs.map((m, i) => (
-                  <div
-                    key={i}
-                    className={
-                      m.role === "user"
-                        ? "ms-auto max-w-[82%] rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg"
-                        : m.role === "sys"
-                          ? "mx-auto max-w-[70%] rounded-2xl border border-dashed border-border/60 px-4 py-2 text-[11px] uppercase tracking-[0.32em] text-foreground/50"
-                          : "me-auto max-w-[82%] rounded-2xl border border-border/50 bg-white/85 px-4 py-3 text-sm text-foreground shadow-sm backdrop-blur dark:bg-white/10"
-                    }
-                  >
-                    {m.text}
-                  </div>
-                ))}
-
-                <div className="rounded-2xl border border-border/50 bg-white/80 p-4 shadow-sm backdrop-blur dark:bg-white/10">
-                  <div className="mb-2 text-sm font-semibold text-foreground">
-                    Job Description (اختياري)
-                  </div>
-                  <textarea
-                    value={jd}
-                    onChange={(e) => setJd(e.target.value)}
-                    className="min-h-[140px] w-full rounded-2xl border border-border/50 bg-white/90 px-4 py-3 text-sm leading-relaxed text-foreground/70 shadow-inner dark:bg-white/10"
-                    placeholder="ألصق وصف الوظيفة هنا ثم اطلب من الذكاء توليد المتطلبات"
-                  />
-                  <div className="mt-2 flex gap-2">
-                    <Button2
-                      onClick={handleSuggest}
-                      disabled={!jd.trim() || suggesting}
-                      className="border border-border/50 bg-white/80 text-foreground/70 transition hover:text-foreground dark:bg-white/10"
+              <div className="flex h-[min(70vh,560px)] flex-col">
+                <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                        message.role === "user" &&
+                          "ms-auto bg-[linear-gradient(135deg,rgba(249,115,22,0.95),rgba(214,121,59,0.9))] text-primary-foreground",
+                        message.role === "assistant" &&
+                          "me-auto bg-card text-foreground ring-1 ring-border/50",
+                        message.role === "system" &&
+                          "mx-auto bg-muted/70 text-muted-foreground text-xs uppercase tracking-[0.3em]",
+                      )}
                     >
-                      {suggesting ? (
-                        <Loader22 className="me-2 size-4 animate-spin" />
-                      ) : (
-                        <Wand22 className="me-2 size-4" />
-                      )}{" "}
-                      {suggesting
-                        ? "جارٍ الاستخراج..."
-                        : "اقترح المتطلبات بالذكاء"}
-                    </Button2>
-                    <Button2 variant="ghost" onClick={() => setJd("")}>
-                      مسح
-                    </Button2>
-                  </div>
-                </div>
-
-                <div className="space-y-4 rounded-2xl border border-border/50 bg-white/85 p-4 shadow-sm backdrop-blur dark:bg-white/10">
-                  <div className="text-xs uppercase tracking-[0.32em] text-foreground/50">{tt("chat.pickCv")}</div>
-                  <select
-                    value={cvId}
-                    onChange={(e) => setCvId(e.target.value)}
-                    className="w-full rounded-2xl border border-border/60 bg-white/90 px-3 py-2 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
-                  >
-                    <option value="">{tt("chat.pickCv")}</option>
-                    {cvs.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.originalFilename || c.id.slice(0, 10)}
-                      </option>
-                    ))}
-                  </select>
-
-                  <div className="text-xs uppercase tracking-[0.32em] text-foreground/50">
-                    {tt("chat.pickJob")}
-                  </div>
-                  <select
-                    value={jobId}
-                    onChange={(e) => setJobId(e.target.value)}
-                    className="w-full rounded-2xl border border-border/60 bg-white/90 px-3 py-2 text-sm text-foreground/80 shadow-ring focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:bg-white/10"
-                  >
-                    <option value="">{tt("chat.pickJob")}</option>
-                    {jobs.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.title}
-                      </option>
-                    ))}
-                  </select>
-
-                  <Button2
-                    onClick={run}
-                    disabled={!cvId || !jobId || loading}
-                    className="w-full bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-soft hover:brightness-110"
-                  >
-                    {loading ? (
-                      <Loader22 className="me-2 animate-spin" />
-                    ) : (
-                      <Play2 className="me-2" size={16} />
-                    )}{" "}
-                    {loading ? tt("chat.running") : tt("chat.run")}
-                  </Button2>
-                </div>
-
-                {result && (
-                  <motion2.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4 rounded-2xl border border-border/50 bg-white/90 p-4 shadow-sm backdrop-blur dark:bg-white/10"
-                  >
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[160px_1fr]">
-                      <div className="grid place-items-center">
-                        <ScoreGauge value={Number(result.score || 0)} />
+                      <div className="whitespace-pre-wrap leading-relaxed" dir="auto">
+                        {message.content || (lang === "ar" ? "..." : "...")}
                       </div>
-                      <div>
-                        <div className="mb-1 font-semibold text-foreground">
-                          {tt("chat.score")} • {Number(result.score || 0).toFixed(2)}
+                      {message.streaming && (
+                        <div className="mt-2 flex items-center gap-1 text-[11px] text-foreground/40">
+                          <Loader2 className="size-3 animate-spin" />
+                          {lang === "ar" ? "جاري الإرسال" : "Streaming"}
                         </div>
-                        <div className="text-xs text-foreground/60">
-                          model: {result.model} • status: {result.status}
-                        </div>
-                        {result.gaps && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {result.gaps.mustHaveMissing?.map((g) => (
-                              <span
-                                key={"m" + g}
-                                className="rounded-full bg-rose-100 px-2 py-1 text-xs font-medium text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
-                              >
-                                Must: {g}
-                              </span>
-                            ))}
-                            {result.gaps.improve?.map((g) => (
-                              <span
-                                key={"i" + g}
-                                className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                              >
-                                Improve: {g}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
+                  ))}
+                </div>
 
-                    {Array.isArray(result.breakdown) && (
-                      <div className="mt-2">
-                        <div className="mb-2 font-semibold">Breakdown</div>
-                        <div className="max-h-64 space-y-2 overflow-auto pr-1">
-                          {result.breakdown.map((r: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="rounded-xl border border-border/50 bg-white/80 px-3 py-2 text-sm text-foreground/80 shadow-sm dark:bg-white/10"
-                            >
-                              <div className="text-sm font-medium text-foreground">
-                                {r.requirement}
-                              </div>
-                              <div className="text-xs text-foreground/60">
-                                must:{r.mustHave ? "✓" : "—"} • weight:
-                                {r.weight} • sim:
-                                {(r.similarity * 100).toFixed(1)}% • score:
-                                {Number(r.score10 || 0).toFixed(1)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </motion2.div>
-                )}
+                <div className="border-t border-border/50 bg-background/80 px-6 py-4">
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {suggestions.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => handleSuggestion(item.prompt)}
+                        disabled={isStreaming}
+                        className="chip whitespace-nowrap text-xs transition disabled:opacity-50"
+                      >
+                        <Sparkles className="size-3" /> {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                    <div className="relative flex-1">
+                      <textarea
+                        ref={inputRef}
+                        value={input}
+                        onChange={(event) => setInput(event.target.value)}
+                        onKeyDown={handleKeyDown}
+                        rows={3}
+                        dir="auto"
+                        placeholder={
+                          lang === "ar"
+                            ? "اكتب سؤالك أو الصق وصف الوظيفة..."
+                            : "Ask something or paste a job snippet..."
+                        }
+                        className="w-full resize-none rounded-[1.75rem] border border-border/40 bg-card/85 px-4 py-3 text-sm text-foreground/80 shadow-[0_1px_0_rgba(255,255,255,0.3),0_18px_45px_-35px_rgba(88,47,16,0.25)] transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background dark:border-border/40 dark:bg-card/50"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={!input.trim() || isStreaming}
+                      className="h-12 w-12 rounded-full"
+                    >
+                      {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                    </Button>
+                  </form>
+                </div>
               </div>
-            </motion2.div>
-          </motion2.div>
+            </motion.div>
+          </motion.div>
         )}
-      </AnimatePresence2>
+      </AnimatePresence>
     </>
   );
 }

@@ -82,6 +82,13 @@ function parseRequirements(text: string): JobRequirement[] {
     });
 }
 
+function extractLines(text: string): string[] {
+  return text
+    .split(/\n+/)
+    .map((line) => line.replace(/^[\s•\-–\d\.)]+/, "").trim())
+    .filter(Boolean);
+}
+
 function useAutoScroll<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
   const scrollToBottom = React.useCallback(() => {
@@ -137,6 +144,8 @@ export default function AIConsole() {
   const [result, setResult] = useState<Analysis | null>(null);
   const [expanded, setExpanded] = useState(true);
   const [peekBreakdown, setPeekBreakdown] = useState(false);
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
   const { ref: listRef, scrollToBottom } = useAutoScroll<HTMLDivElement>();
   useEffect(() => scrollToBottom(), [messages, result, scrollToBottom]);
@@ -232,6 +241,118 @@ export default function AIConsole() {
     setListening(false);
   };
 
+  const handleAISuggest = async () => {
+    if (!title.trim() && !description.trim() && !reqText.trim()) {
+      const note =
+        lang === "ar"
+          ? "أدخل عنوانًا أو وصفًا للوظيفة قبل طلب الاقتراحات."
+          : "Add a job title or description before asking for suggestions.";
+      setAiFeedback(note);
+      push({
+        role: "bot",
+        content: <div className="text-sm">{note}</div>,
+      });
+      return;
+    }
+
+    setAiFeedback(null);
+    setAiSuggesting(true);
+
+    try {
+      const instructions =
+        lang === "ar"
+          ? "أنت مساعد توظيف يكتب متطلبات تقنية موجزة بالعربية. أعد قائمة مختصرة (حتى 8 عناصر) بعبارات تبدأ بفعل أو وصف المهارة. اشِر إلى (must) إذا كانت ضرورية، وضع رقم الوزن بين 1-3 في نهاية السطر بهذا الشكل: , must, 2."
+          : "You are a hiring assistant that writes concise technical requirements in English. Return up to 8 bullet-style lines, each optionally marking must-have items with 'must' and ending with a numeric weight like ', must, 2'.";
+
+      const userPrompt = [
+        lang === "ar" ? `عنوان الوظيفة: ${title || "—"}` : `Job title: ${title || "—"}`,
+        lang === "ar"
+          ? `وصف الوظيفة: ${description || "—"}`
+          : `Job description: ${description || "—"}`,
+        reqText.trim()
+          ? lang === "ar"
+            ? `متطلبات مبدئية:
+${reqText}`
+            : `Draft requirements:
+${reqText}`
+          : lang === "ar"
+            ? "لا توجد متطلبات مبدئية."
+            : "No draft requirements provided.",
+        lang === "ar"
+          ? "أعطني المتطلبات المقترحة كسطور منفصلة."
+          : "Provide the suggested requirements as separate lines.",
+      ].join("\n\n");
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lang,
+          intent: "requirements",
+          context: {
+            title,
+            description,
+          },
+          messages: [
+            { role: "system", content: instructions },
+            { role: "user", content: userPrompt },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(text || "failed");
+      }
+
+      const text = await response.text();
+      const lines = extractLines(text).slice(0, 12);
+
+      if (!lines.length) {
+        throw new Error(lang === "ar" ? "لم يتم العثور على اقتراحات." : "No suggestions were returned.");
+      }
+
+      const suggestionBlock = lines.join("\n");
+      setReqText(suggestionBlock);
+      const parsed = parseRequirements(suggestionBlock);
+      setReqs(parsed);
+      setAiFeedback(
+        lang === "ar"
+          ? "تم توليد المتطلبات. راجعها ثم اضغط على تأكيد المتطلبات."
+          : "Suggestions ready – review then confirm the requirements.",
+      );
+      push({
+        role: "bot",
+        content: (
+          <div>
+            <div className="font-semibold">
+              {lang === "ar" ? "اقتراحات الذكاء" : "AI Suggestions"}
+            </div>
+            <ul className="mt-1 list-disc ps-5 text-xs opacity-75">
+              {lines.slice(0, 6).map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ),
+      });
+    } catch (error: any) {
+      const message =
+        typeof error?.message === "string" && error.message
+          ? error.message
+          : lang === "ar"
+            ? "تعذر جلب الاقتراحات."
+            : "Could not fetch suggestions.";
+      setAiFeedback(message);
+      push({
+        role: "bot",
+        content: <div className="text-sm text-destructive">{message}</div>,
+      });
+    } finally {
+      setAiSuggesting(false);
+    }
+  };
+
   const run = async () => {
     if (!cvFile || reqs.length === 0) {
       push({
@@ -282,7 +403,7 @@ export default function AIConsole() {
         role: "bot",
         content: (
           <div>
-            <div className="inline-flex items-center gap-2 text-green-700 dark:text-green-400">
+            <div className="inline-flex items-center gap-2 text-success">
               <CheckCircle2 className="size-5" /> {tt("chat.done")}
             </div>
             <div className="mt-2 text-sm">
@@ -291,9 +412,9 @@ export default function AIConsole() {
               10
             </div>
             {Array.isArray(final.breakdown) && (
-              <div className="mt-3 max-h-56 overflow-auto rounded-2xl border border-black/10 dark:border-white/10">
+              <div className="mt-3 max-h-56 overflow-auto rounded-2xl border border-border/40">
                 <table className="w-full text-xs">
-                  <thead className="bg-black/5 dark:bg-white/10">
+                  <thead className="bg-muted/60 text-muted-foreground dark:bg-muted/30">
                     <tr>
                       <th className="p-2 text-start">Requirement</th>
                       <th className="p-2">Must</th>
@@ -306,7 +427,7 @@ export default function AIConsole() {
                     {final.breakdown.map((r: any, i: number) => (
                       <tr
                         key={i}
-                        className="border-t border-black/10 dark:border-white/10"
+                        className="border-t border-border/30"
                       >
                         <td className="p-2">{r.requirement}</td>
                         <td className="p-2 text-center">
@@ -343,7 +464,7 @@ export default function AIConsole() {
       push({
         role: "bot",
         content: (
-          <div className="text-sm text-red-600">
+          <div className="text-sm text-destructive">
             Error: {e?.message || "failed"}
           </div>
         ),
@@ -383,7 +504,7 @@ export default function AIConsole() {
 
         <div
           ref={listRef}
-          className="rounded-[26px] border border-border/50 bg-white/75 p-4 shadow-inner backdrop-blur-md dark:bg-white/10"
+          className="rounded-[26px] border border-border/60 bg-card/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)] backdrop-blur-md dark:border-border/40 dark:bg-card/40"
           aria-live="polite"
         >
           <AnimatePresence initial={false}>
@@ -398,9 +519,9 @@ export default function AIConsole() {
                   m.role === "user" &&
                     "ms-auto bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground ring-white/10",
                   m.role === "bot" &&
-                    "me-auto bg-white/90 text-foreground ring-foreground/5 dark:bg-white/10",
+                    "me-auto bg-card/90 text-foreground ring-foreground/8 dark:bg-card/50",
                   m.role === "sys" &&
-                    "mx-auto bg-foreground/5 text-foreground/80 text-xs ring-transparent dark:bg-white/10",
+                    "mx-auto bg-muted/70 text-muted-foreground text-xs ring-transparent dark:bg-muted/30",
                 )}
               >
                 {m.content}
@@ -409,7 +530,7 @@ export default function AIConsole() {
           </AnimatePresence>
 
           {result && (
-            <div className="me-auto mt-3 max-w-[80%] rounded-2xl border border-success/40 bg-success/10 px-4 py-3 text-sm text-success shadow-sm">
+            <div className="me-auto mt-3 max-w-[80%] rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm text-success shadow-sm">
               <div className="text-sm">
                 <b>{tt("chat.score")}:</b> {result.score?.toFixed?.(2) ?? "-"} /
                 10
@@ -433,7 +554,8 @@ export default function AIConsole() {
               placeholder={lang === "ar" ? "Job Title (اختياري)" : "Job Title (optional)"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-12 rounded-2xl bg-white/90 dark:bg-white/10"
+              className="h-12 rounded-2xl"
+              dir="auto"
             />
             <Input
               placeholder={
@@ -443,11 +565,12 @@ export default function AIConsole() {
               }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="h-12 rounded-2xl bg-white/90 dark:bg-white/10"
+              className="h-12 rounded-2xl"
+              dir="auto"
             />
           </div>
 
-          <div className="rounded-[26px] border border-border/60 bg-white/70 p-4 shadow-sm dark:bg-white/10">
+          <div className="rounded-[26px] border border-border/60 bg-card/80 p-4 shadow-sm dark:border-border/40 dark:bg-card/40">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.32em] text-foreground/40">
@@ -459,11 +582,29 @@ export default function AIConsole() {
                     : "One requirement per line • add must / weight if needed"}
                 </p>
               </div>
-              <Button variant="ghost" size="sm" onClick={onSendReqs} className="gap-2">
-                <Sparkles className="size-4" />
-                {lang === "ar" ? "تأكيد المتطلبات" : "Confirm Requirements"}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAISuggest}
+                  loading={aiSuggesting}
+                  className="gap-2"
+                >
+                  <Sparkles className="size-4" />
+                  {lang === "ar" ? "اقترح المتطلبات بالذكاء" : "AI Suggest"}
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={onSendReqs} className="gap-2">
+                  <CheckCircle2 className="size-4" />
+                  {lang === "ar" ? "تأكيد المتطلبات" : "Confirm Requirements"}
+                </Button>
+              </div>
             </div>
+
+            {aiFeedback && (
+              <p className="mt-2 text-xs text-foreground/60" dir="auto">
+                {aiFeedback}
+              </p>
+            )}
 
             <div className="mt-4">
               <RequirementPicker onAdd={onQuickAdd} />
@@ -479,7 +620,8 @@ export default function AIConsole() {
                     ? `مثال:\nReact, must, 2\nTypeScript, 1\nTailwind`
                     : `Example:\nReact, must, 2\nTypeScript, 1\nTailwind`
                 }
-                className="min-h-[164px] rounded-2xl bg-white/90 font-mono text-xs leading-relaxed dark:bg-white/10"
+                className="min-h-[164px] rounded-2xl font-mono text-xs leading-relaxed"
+                dir="auto"
               />
               <div className="flex flex-col gap-2 sm:items-end">
                 <Button
@@ -497,7 +639,7 @@ export default function AIConsole() {
             </div>
 
             {reqs.length > 0 && (
-              <div className="mt-4 rounded-2xl border border-border/50 bg-white/90 p-4 shadow-sm dark:bg-white/5">
+              <div className="mt-4 rounded-2xl border border-border/50 bg-card/85 p-4 shadow-sm dark:border-border/40 dark:bg-card/40">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground/60">
                     {lang === "ar" ? "متطلبات" : "Requirements"} ({reqs.length})
@@ -522,12 +664,12 @@ export default function AIConsole() {
                         {reqs.map((r, i) => (
                           <li
                             key={i}
-                            className="flex items-center justify-between rounded-xl border border-border/40 bg-white/80 px-3 py-2 text-xs text-foreground/80 shadow-sm dark:bg-white/10"
-                          >
-                            <span className="truncate">
-                              {r.requirement}
-                              {r.mustHave && (
-                                <span className="ms-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-700">
+                      className="flex items-center justify-between rounded-xl border border-border/40 bg-card/80 px-3 py-2 text-xs text-foreground/80 shadow-sm dark:border-border/40 dark:bg-card/50"
+                    >
+                      <span className="truncate">
+                        {r.requirement}
+                        {r.mustHave && (
+                          <span className="ms-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-700">
                                   must
                                 </span>
                               )}
@@ -580,7 +722,7 @@ export default function AIConsole() {
             <div className="mt-4 flex flex-col gap-3 border-t border-border/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <label
                 htmlFor="cvfile"
-                className="group inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-border/60 bg-white/80 px-4 py-2 text-sm text-foreground/70 shadow-sm transition hover:border-primary/40 hover:text-foreground dark:bg-white/10"
+                className="group inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-2 text-sm text-foreground/70 shadow-sm transition hover:border-primary/40 hover:text-foreground dark:border-border/40 dark:bg-card/50"
               >
                 <span className="grid size-9 place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-soft">
                   <Paperclip className="size-4" />

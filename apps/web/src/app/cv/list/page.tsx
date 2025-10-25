@@ -20,13 +20,15 @@ export default function CVList() {
       <h1 className="mb-6 text-xl font-bold">قائمة السير الذاتية</h1>
 
       {loading ? (
-        <div className="rounded-xl border p-6 text-center">Loading…</div>
+        <div className="rounded-xl border border-border/50 bg-card/80 p-6 text-center shadow-sm dark:border-border/40 dark:bg-card/40">
+          Loading…
+        </div>
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border/50 bg-card/80 p-8 text-center text-sm text-muted-foreground shadow-sm dark:border-border/40 dark:bg-card/40">
           لا توجد ملفات بعد. ارفع أول CV من صفحة الرفع.
         </div>
       ) : (
-        <ul className="divide-y rounded-2xl border bg-white/50 shadow-sm backdrop-blur">
+        <ul className="divide-y divide-border/40 rounded-2xl border border-border/60 bg-card/80 shadow-sm backdrop-blur dark:border-border/40 dark:bg-card/40">
           {items.map((i) => {
             const publicUrl = buildPublicUrl(i);
             const created = i.createdAt

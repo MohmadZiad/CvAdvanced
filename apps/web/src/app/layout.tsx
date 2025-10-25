@@ -111,22 +111,22 @@ export default function RootLayout({
 
           {/* خلفيات زخرفية لطيفة */}
           <div className="pointer-events-none fixed inset-0 -z-30">
-            <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(82,109,255,0.18),transparent_45%),radial-gradient(140%_140%_at_0%_100%,rgba(56,189,248,0.16),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(249,115,22,0.16),transparent_45%),radial-gradient(140%_140%_at_0%_100%,rgba(255,189,135,0.18),transparent_52%)]" />
             <div
               aria-hidden
-              className="absolute left-1/2 top-[-28rem] h-[42rem] w-[42rem] -translate-x-1/2 rounded-full bg-[conic-gradient(from_140deg_at_50%_50%,rgba(59,130,246,0.35),rgba(139,92,246,0.3),rgba(20,184,166,0.25),rgba(59,130,246,0.35))] opacity-70 blur-3xl dark:opacity-60"
+              className="absolute left-1/2 top-[-28rem] h-[42rem] w-[42rem] -translate-x-1/2 rounded-full bg-[conic-gradient(from_140deg_at_50%_50%,rgba(249,115,22,0.28),rgba(255,189,135,0.24),rgba(255,223,199,0.22),rgba(249,115,22,0.28))] opacity-70 blur-3xl dark:opacity-60"
             />
             <div
               aria-hidden
-              className="absolute right-[12%] top-[20%] h-56 w-56 rounded-[40%] bg-gradient-to-br from-primary/35 via-secondary/25 to-transparent blur-2xl dark:from-primary/25 dark:via-secondary/20"
+              className="absolute right-[12%] top-[20%] h-56 w-56 rounded-[40%] bg-gradient-to-br from-primary/35 via-secondary/25 to-transparent blur-2xl dark:from-primary/30 dark:via-secondary/20"
             />
             <div
               aria-hidden
-              className="absolute left-[18%] bottom-[12%] h-72 w-72 rounded-[50%] bg-gradient-to-br from-accent/25 via-primary/20 to-transparent blur-2xl dark:from-accent/20 dark:via-primary/15"
+              className="absolute left-[18%] bottom-[12%] h-72 w-72 rounded-[50%] bg-gradient-to-br from-accent/25 via-primary/18 to-transparent blur-2xl dark:from-accent/18 dark:via-primary/15"
             />
           </div>
 
-          <div className="pointer-events-none fixed inset-x-0 top-0 z-[-10] h-40 bg-gradient-to-b from-background via-background/60 to-transparent dark:from-[#0b0b10] dark:via-[#0b0b10]/70" />
+          <div className="pointer-events-none fixed inset-x-0 top-0 z-[-10] h-40 bg-gradient-to-b from-background via-background/70 to-transparent dark:from-[#120d0a] dark:via-[#120d0a]/75" />
 
           <div className="relative z-10 flex min-h-dvh flex-col">
             <Topbar />
@@ -141,9 +141,9 @@ export default function RootLayout({
 
             <footer className="relative z-10 mt-auto bg-transparent pb-12">
               <div className="container">
-                <div className="group mx-auto flex w-full max-w-5xl flex-col gap-5 rounded-[2rem] border border-border/40 bg-white/65 p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.65)] backdrop-blur-2xl transition-colors dark:border-white/10 dark:bg-white/10 dark:shadow-[0_20px_60px_-45px_rgba(2,6,23,0.75)] sm:flex-row sm:items-center sm:justify-between">
+                <div className="group mx-auto flex w-full max-w-5xl flex-col gap-5 rounded-[2rem] border border-border/50 bg-card/85 p-6 shadow-soft backdrop-blur-2xl transition-colors dark:border-border/40 dark:bg-card/60 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="relative flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-[0_18px_45px_-30px_rgba(59,130,246,0.85)]">
+                    <div className="relative flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-[0_18px_45px_-30px_rgba(249,115,22,0.65)]">
                       <span className="text-xl">⚡</span>
                       <span
                         className="absolute inset-0 rounded-2xl bg-white/30 opacity-0 transition-opacity duration-500 group-hover:opacity-40"

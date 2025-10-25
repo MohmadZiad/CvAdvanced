@@ -18,14 +18,24 @@ export default function ResultDetail() {
       .finally(() => setLoading(false));
   }, [params?.id]);
 
-  if (loading) return <div className="max-w-3xl mx-auto">Loading...</div>;
-  if (!data) return <div className="max-w-3xl mx-auto">Not found</div>;
+  if (loading)
+    return (
+      <div className="mx-auto max-w-3xl rounded-xl border border-border/50 bg-card/80 p-4 text-center shadow-sm">
+        Loading...
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="mx-auto max-w-3xl rounded-xl border border-border/50 bg-card/80 p-4 text-center shadow-sm">
+        Not found
+      </div>
+    );
 
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-lg font-bold mb-3">نتيجة التحليل</h1>
 
-      <div className="border rounded-xl p-4 mb-4">
+      <div className="mb-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm dark:border-border/40 dark:bg-card/50">
         <div>
           الحالة: <b>{data.status}</b>
         </div>
@@ -34,7 +44,7 @@ export default function ResultDetail() {
           <b>{typeof data.score === "number" ? data.score.toFixed(2) : "-"}</b>
         </div>
         {data.model && (
-          <div className="text-xs text-black/60 dark:text-white/60 mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             model: {data.model}
           </div>
         )}
@@ -43,9 +53,9 @@ export default function ResultDetail() {
       {Array.isArray(data.breakdown) && (
         <div className="mt-3">
           <h2 className="font-semibold mb-2">Per requirement</h2>
-          <div className="rounded-xl border overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm dark:border-border/40 dark:bg-card/40">
             <table className="w-full text-sm">
-              <thead className="bg-black/5 dark:bg-white/10">
+              <thead className="bg-muted/60 text-muted-foreground dark:bg-muted/30">
                 <tr>
                   <th className="p-2 text-start">Requirement</th>
                   <th className="p-2">Must</th>
@@ -56,7 +66,7 @@ export default function ResultDetail() {
               </thead>
               <tbody>
                 {data.breakdown.map((r: any, idx: number) => (
-                  <tr key={idx} className="border-t">
+                  <tr key={idx} className="border-t border-border/40">
                     <td className="p-2">{r.requirement}</td>
                     <td className="p-2 text-center">{r.mustHave ? "✓" : ""}</td>
                     <td className="p-2 text-center">{r.weight}</td>
