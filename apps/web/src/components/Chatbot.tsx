@@ -2,11 +2,15 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { Loader2, MessageCircle, Send, Sparkles, X, Play } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useLang } from "@/components/ui/theme-provider";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+
+import { cvApi, type CV } from "@/services/api/cv";
+import { jobsApi, type Job } from "@/services/api/jobs";
+import { analysesApi, type Analysis } from "@/services/api/analyses";
 
 import type { Lang } from "@/components/ui/theme-provider";
 
@@ -20,43 +24,37 @@ type ChatMessage = {
 type Suggestion = { label: string; prompt: string };
 
 const SYSTEM_PROMPT: Record<Lang, string> = {
-  ar: "أنت مساعد مطابقة سير ذاتية متاح باللغة العربية. كن ودودًا، عمليًا، وقدّم إجابات موجزة مدعومة بخطوات قابلة للتنفيذ. استخدم نقطًا عند الحاجة واجعل النبرة مهنية مشجعة.",
-  en: "You are a CV matching copilot. Respond in a warm, professional tone with concise, actionable guidance. Use short paragraphs or bullets when helpful.",
+  ar: "أنت مساعد مطابقة سير ذاتية متاح باللغة العربية. كن ودودًا، عمليًا، وقدّم إجابات موجزة مدعومة بخطوات قابلة للتنفيذ.",
+  en: "You are a CV matching copilot. Be warm and concise with actionable guidance.",
 };
 
 const SUGGESTION_PRESETS: Record<Lang, Suggestion[]> = {
   ar: [
     {
       label: "اقترح متطلبات لهذه الوظيفة",
-      prompt:
-        "أحتاج إلى مسودة متطلبات للوظيفة التي أعمل عليها الآن. اصنع قائمة قصيرة من المهارات والخبرات الأساسية مرتبة بالأهمية.",
+      prompt: "أحتاج إلى مسودة متطلبات للوظيفة الحالية...",
     },
     {
       label: "حلل الـCV وأعطني نقاط القوة",
-      prompt:
-        "حلّل السير الذاتية التي أراجعها وحدد أبرز نقاط القوة التي يمكن إبرازها أثناء المقابلة أو في بريد المتابعة.",
+      prompt: "حلّل سيرتي الذاتية واستخرج أبرز نقاط القوة.",
     },
     {
       label: "قارن الـCV مع React + TypeScript",
-      prompt:
-        "قارن مهارات المرشح الحالية مع متطلبات وظيفة تعتمد على React وTypeScript، واشرح الفجوات وكيف يمكن سدّها.",
+      prompt: "قارن خبراتي بمتطلبات وظيفة React + TypeScript.",
     },
   ],
   en: [
     {
       label: "Draft job requirements",
-      prompt:
-        "Draft a concise list of job requirements for the role I am hiring for. Prioritize core technical and collaboration skills.",
+      prompt: "Draft core requirements for the role I’m hiring for.",
     },
     {
       label: "Summarise CV strengths",
-      prompt:
-        "Review the candidate profile and list the top strengths I should highlight during interview debriefs.",
+      prompt: "List the candidate’s top strengths to highlight.",
     },
     {
       label: "Gap check for React + TS",
-      prompt:
-        "Compare the candidate's experience against a React + TypeScript position. Point out gaps and suggest how to close them.",
+      prompt: "Compare the candidate against a React+TS role and list gaps.",
     },
   ],
 };
@@ -69,15 +67,20 @@ export default function Chatbot() {
 
   const [open, setOpen] = React.useState(false);
   const [input, setInput] = React.useState("");
-  const [messages, setMessages] = React.useState<ChatMessage[]>(() => [
-    {
-      id: INITIAL_ID,
-      role: "assistant",
-      content: t(lang, "chat.hello"),
-    },
+  const [messages, setMessages] = React.useState<ChatMessage[]>([
+    { id: INITIAL_ID, role: "assistant", content: t(lang, "chat.hello") },
   ]);
   const [isStreaming, setIsStreaming] = React.useState(false);
 
+  // CV / Job panel
+  const [cvs, setCvs] = React.useState<CV[]>([]);
+  const [jobs, setJobs] = React.useState<Job[]>([]);
+  const [cvId, setCvId] = React.useState("");
+  const [jobId, setJobId] = React.useState("");
+  const [running, setRunning] = React.useState(false);
+  const [lastAnalysis, setLastAnalysis] = React.useState<Analysis | null>(null);
+
+  // refs
   const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const messagesRef = React.useRef<ChatMessage[]>(messages);
@@ -87,8 +90,10 @@ export default function Chatbot() {
     messagesRef.current = messages;
     if (!open) return;
     requestAnimationFrame(() => {
-      const el = listRef.current;
-      if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      listRef.current?.scrollTo({
+        top: listRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     });
   }, [messages, open]);
 
@@ -99,22 +104,48 @@ export default function Chatbot() {
   }, [open, lang]);
 
   React.useEffect(() => {
+    // إعادة رسالة الترحيب عند تغيير اللغة
     setMessages([
-      {
-        id: INITIAL_ID,
-        role: "assistant",
-        content: t(lang, "chat.hello"),
-      },
+      { id: INITIAL_ID, role: "assistant", content: t(lang, "chat.hello") },
     ]);
   }, [lang]);
+
+  // تحميل القوائم عندما تُفتح نافذة الشات
+  React.useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const [{ items: cvItems }, { items: jobItems }] = await Promise.all([
+          cvApi.list(),
+          jobsApi.list(),
+        ]);
+        setCvs(cvItems || []);
+        setJobs(jobItems || []);
+      } catch {
+        appendMessage({
+          id: crypto.randomUUID(),
+          role: "system",
+          content:
+            lang === "ar"
+              ? "تعذر جلب القوائم من الـ API. تأكد من تشغيل الباك إند وضبط NEXT_PUBLIC_API_URL."
+              : "Failed to load lists from API. Ensure backend is running and NEXT_PUBLIC_API_URL is set.",
+        });
+      }
+    })();
+  }, [open]); // eslint-disable-line
 
   const appendMessage = React.useCallback((message: ChatMessage) => {
     setMessages((prev) => [...prev, message]);
   }, []);
 
-  const updateMessage = React.useCallback((id: string, updater: (current: ChatMessage) => ChatMessage) => {
-    setMessages((prev) => prev.map((msg) => (msg.id === id ? updater(msg) : msg)));
-  }, []);
+  const updateMessage = React.useCallback(
+    (id: string, updater: (current: ChatMessage) => ChatMessage) => {
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === id ? updater(msg) : msg))
+      );
+    },
+    []
+  );
 
   const sendMessage = React.useCallback(
     async (raw: string) => {
@@ -126,12 +157,16 @@ export default function Chatbot() {
         role: "user",
         content,
       };
-
       appendMessage(userMessage);
       setInput("");
 
       const assistantId = crypto.randomUUID();
-      appendMessage({ id: assistantId, role: "assistant", content: "", streaming: true });
+      appendMessage({
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        streaming: true,
+      });
 
       const history = [...messagesRef.current, userMessage]
         .filter((item) => item.role !== "system")
@@ -145,21 +180,25 @@ export default function Chatbot() {
         streamingRef.current = true;
         setIsStreaming(true);
 
-        const response = await fetch("/api/chat", {
+        const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             lang,
             intent: "chat",
-            messages: [{ role: "system", content: SYSTEM_PROMPT[lang] }, ...history],
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT[lang] },
+              ...history,
+            ],
           }),
         });
 
-        if (!response.ok || !response.body) {
-          throw new Error(response.statusText || "network error");
+        if (!res.ok || !res.body) {
+          const errText = await res.text().catch(() => res.statusText);
+          throw new Error(errText || "network error");
         }
 
-        const reader = response.body.getReader();
+        const reader = res.body.getReader();
         const decoder = new TextDecoder();
 
         while (true) {
@@ -167,51 +206,84 @@ export default function Chatbot() {
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           if (!chunk) continue;
-          updateMessage(assistantId, (current) => ({
-            ...current,
-            content: current.content + chunk,
+          updateMessage(assistantId, (curr) => ({
+            ...curr,
+            content: curr.content + chunk,
           }));
         }
 
-        updateMessage(assistantId, (current) => ({ ...current, streaming: false }));
+        updateMessage(assistantId, (curr) => ({ ...curr, streaming: false }));
       } catch (error: any) {
         const fallback =
           lang === "ar"
             ? `حدث خطأ أثناء جلب الرد: ${error?.message || "غير معروف"}`
             : `Unable to complete the request: ${error?.message || "unknown error"}`;
-        updateMessage(assistantId, (current) => ({ ...current, content: fallback, streaming: false }));
+        updateMessage(assistantId, (curr) => ({
+          ...curr,
+          content: fallback,
+          streaming: false,
+        }));
       } finally {
         streamingRef.current = false;
         setIsStreaming(false);
       }
     },
-    [appendMessage, lang, updateMessage],
+    [appendMessage, lang, updateMessage]
   );
 
   const handleSubmit = React.useCallback(
-    (event?: React.FormEvent<HTMLFormElement>) => {
-      event?.preventDefault();
+    (e?: React.FormEvent<HTMLFormElement>) => {
+      e?.preventDefault();
       void sendMessage(input);
     },
-    [input, sendMessage],
-  );
-
-  const handleSuggestion = React.useCallback(
-    (prompt: string) => {
-      void sendMessage(prompt);
-    },
-    [sendMessage],
+    [input, sendMessage]
   );
 
   const handleKeyDown = React.useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
         void sendMessage(input);
       }
     },
-    [input, sendMessage],
+    [input, sendMessage]
   );
+
+  const runAnalysis = React.useCallback(async () => {
+    if (!cvId || !jobId) return;
+    setRunning(true);
+    setLastAnalysis(null);
+    appendMessage({
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content:
+        lang === "ar" ? "⏳ جاري تشغيل التحليل..." : "⏳ Running analysis...",
+    });
+    try {
+      const a = await analysesApi.run({ jobId, cvId });
+      setLastAnalysis(a);
+      appendMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          (lang === "ar"
+            ? "✅ تم التحليل. الدرجة: "
+            : "✅ Analysis done. Score: ") +
+          (typeof a?.score === "number" ? a.score.toFixed(2) : "-") +
+          "/10",
+      });
+    } catch (e: any) {
+      appendMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          (lang === "ar" ? "❌ فشل التحليل: " : "❌ Analysis failed: ") +
+          (e?.message || "error"),
+      });
+    } finally {
+      setRunning(false);
+    }
+  }, [appendMessage, cvId, jobId, lang]);
 
   return (
     <>
@@ -232,7 +304,11 @@ export default function Chatbot() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[70] flex items-end justify-end bg-black/35 backdrop-blur-sm"
           >
-            <div className="absolute inset-0" onClick={() => setOpen(false)} aria-hidden />
+            <div
+              className="absolute inset-0"
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
             <motion.div
               initial={{ y: 60, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -245,7 +321,9 @@ export default function Chatbot() {
                   <p className="text-xs uppercase tracking-[0.32em] text-foreground/50">
                     {lang === "ar" ? "مساعد التحليل" : "Analysis assistant"}
                   </p>
-                  <p className="text-sm font-semibold text-foreground">{t(lang, "chat.title")}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {t(lang, "chat.title")}
+                  </p>
                 </div>
                 <Button
                   type="button"
@@ -260,7 +338,68 @@ export default function Chatbot() {
               </div>
 
               <div className="flex h-[min(70vh,560px)] flex-col">
-                <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
+                {/* لوحة التشغيل السريع CV/Job */}
+                <div className="m-4 rounded-2xl border border-border/60 bg-card/80 p-3 text-sm shadow-sm backdrop-blur-md dark:border-border/40 dark:bg-card/40">
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground/60">
+                    {lang === "ar" ? "تشغيل سريع" : "Quick run"}
+                  </div>
+                  <div className="grid gap-2 px-1 sm:grid-cols-2">
+                    <select
+                      className="w-full rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring dark:border-border/40 dark:bg-card/50"
+                      value={cvId}
+                      onChange={(e) => setCvId(e.target.value)}
+                    >
+                      <option value="">
+                        {lang === "ar" ? "— اختر CV —" : "— Select CV —"}
+                      </option>
+                      {cvs.map((cv) => (
+                        <option key={cv.id} value={cv.id}>
+                          {cv.originalFilename || cv.id.slice(0, 10)}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="w-full rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring dark:border-border/40 dark:bg-card/50"
+                      value={jobId}
+                      onChange={(e) => setJobId(e.target.value)}
+                    >
+                      <option value="">
+                        {lang === "ar" ? "— اختر وظيفة —" : "— Select Job —"}
+                      </option>
+                      {jobs.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      className="h-9 px-4"
+                      onClick={runAnalysis}
+                      disabled={!cvId || !jobId || running}
+                    >
+                      {running ? (
+                        <Loader2 className="me-2 size-4 animate-spin" />
+                      ) : (
+                        <Play className="me-2 size-4" />
+                      )}
+                      {running
+                        ? lang === "ar"
+                          ? "جاري التحليل"
+                          : "Running"
+                        : lang === "ar"
+                          ? "حلّل الآن"
+                          : "Run now"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div
+                  ref={listRef}
+                  className="flex-1 space-y-3 overflow-y-auto px-6 py-2"
+                >
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -271,10 +410,13 @@ export default function Chatbot() {
                         message.role === "assistant" &&
                           "me-auto bg-card text-foreground ring-1 ring-border/50",
                         message.role === "system" &&
-                          "mx-auto bg-muted/70 text-muted-foreground text-xs uppercase tracking-[0.3em]",
+                          "mx-auto bg-muted/70 text-muted-foreground text-xs uppercase tracking-[0.3em]"
                       )}
                     >
-                      <div className="whitespace-pre-wrap leading-relaxed" dir="auto">
+                      <div
+                        className="whitespace-pre-wrap leading-relaxed"
+                        dir="auto"
+                      >
                         {message.content || (lang === "ar" ? "..." : "...")}
                       </div>
                       {message.streaming && (
@@ -293,7 +435,7 @@ export default function Chatbot() {
                       <button
                         key={item.label}
                         type="button"
-                        onClick={() => handleSuggestion(item.prompt)}
+                        onClick={() => void sendMessage(item.prompt)}
                         disabled={isStreaming}
                         className="chip whitespace-nowrap text-xs transition disabled:opacity-50"
                       >
@@ -302,12 +444,18 @@ export default function Chatbot() {
                     ))}
                   </div>
 
-                  <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void sendMessage(input);
+                    }}
+                    className="flex items-end gap-2"
+                  >
                     <div className="relative flex-1">
                       <textarea
                         ref={inputRef}
                         value={input}
-                        onChange={(event) => setInput(event.target.value)}
+                        onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={3}
                         dir="auto"
@@ -324,7 +472,11 @@ export default function Chatbot() {
                       disabled={!input.trim() || isStreaming}
                       className="h-12 w-12 rounded-full"
                     >
-                      {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                      {isStreaming ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Send className="size-4" />
+                      )}
                     </Button>
                   </form>
                 </div>

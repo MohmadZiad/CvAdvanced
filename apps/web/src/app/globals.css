@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* =========================
+   CSS Variables (Light)
+   ========================= */
 :root {
   --background: 249 246 240;
   --foreground: 45 28 16;
@@ -40,6 +43,9 @@
   --font-sans: var(--font-display);
 }
 
+/* =========================
+   CSS Variables (Dark)
+   ========================= */
 .dark {
   --background: 18 13 10;
   --foreground: 245 229 219;
@@ -70,6 +76,9 @@
   --shadow-ring: 0 0 0 1px rgba(255, 149, 66, 0.22);
 }
 
+/* =========================
+   Tailwind v4 Theme tokens
+   ========================= */
 @theme {
   --color-background: rgb(var(--background));
   --color-foreground: rgb(var(--foreground));
@@ -97,16 +106,36 @@
   --color-ring: rgb(var(--ring));
 }
 
+/* ============ Base ============ */
 html {
   scroll-behavior: smooth;
+}
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
 }
 
 body {
   min-height: 100%;
   background:
-    radial-gradient(circle at 0% 0%, rgb(var(--primary) / 0.12), transparent 55%),
-    radial-gradient(circle at 100% 18%, rgb(var(--secondary) / 0.16), transparent 58%),
-    radial-gradient(circle at 55% 120%, rgb(var(--accent) / 0.12), transparent 62%),
+    radial-gradient(
+      circle at 0% 0%,
+      rgb(var(--primary) / 0.12),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 100% 18%,
+      rgb(var(--secondary) / 0.16),
+      transparent 58%
+    ),
+    radial-gradient(
+      circle at 55% 120%,
+      rgb(var(--accent) / 0.12),
+      transparent 62%
+    ),
     rgb(var(--background));
   color: rgb(var(--foreground));
   font-family:
@@ -123,17 +152,37 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
-  transition: background-color 300ms ease, color 300ms ease;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
 }
 
 html[lang="ar"] body {
   font-family:
-    var(--font-arabic),
-    var(--font-sans),
-    "Tajawal",
-    "Cairo",
-    "Segoe UI",
+    var(--font-arabic), var(--font-sans), "Tajawal", "Cairo", "Segoe UI",
     sans-serif;
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family:
+    var(--font-display), var(--font-arabic), "Plus Jakarta Sans", "Inter",
+    system-ui;
+  letter-spacing: -0.02em;
+}
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] h5,
+html[lang="ar"] h6 {
+  font-family:
+    var(--font-arabic), var(--font-display), "Tajawal", "Cairo", system-ui;
   letter-spacing: 0;
 }
 
@@ -152,7 +201,6 @@ html[lang="ar"] body {
   scrollbar-width: thin;
   scrollbar-color: rgb(var(--primary) / 0.28) transparent;
 }
-
 .dark * {
   scrollbar-color: rgb(var(--muted-foreground) / 0.38) transparent;
 }
@@ -161,16 +209,19 @@ html[lang="ar"] body {
   width: 10px;
   height: 10px;
 }
-
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgb(var(--primary) / 0.68), rgb(var(--secondary) / 0.6));
+  background: linear-gradient(
+    180deg,
+    rgb(var(--primary) / 0.68),
+    rgb(var(--secondary) / 0.6)
+  );
   border-radius: 999px;
 }
-
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
+/* Skip link */
 .skip-link {
   position: absolute;
   left: 50%;
@@ -185,111 +236,176 @@ html[lang="ar"] body {
   box-shadow: var(--shadow-ring);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
-
 .skip-link:focus {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, 0);
 }
 
-@layer base {
-  :root {
-    color-scheme: light;
-  }
-
-  .dark {
-    color-scheme: dark;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family:
-      var(--font-display),
-      var(--font-arabic),
-      "Plus Jakarta Sans",
-      "Inter",
-      system-ui;
-    letter-spacing: -0.02em;
-  }
-
-  html[lang="ar"] h1,
-  html[lang="ar"] h2,
-  html[lang="ar"] h3,
-  html[lang="ar"] h4,
-  html[lang="ar"] h5,
-  html[lang="ar"] h6 {
-    font-family:
-      var(--font-arabic),
-      var(--font-display),
-      "Tajawal",
-      "Cairo",
-      system-ui;
-    letter-spacing: 0;
-  }
+/* ============ Components ============ */
+.surface {
+  position: relative;
+  overflow: hidden;
+  /* rounded-[calc(var(--radius-lg))] → خاصية مباشرة */
+  border-radius: var(--radius-lg);
+  border: 1px solid rgb(var(--border) / 0.6);
+  /* bg-card/90 → خلفية مع درجة بسيطة */
+  background-color: rgb(var(--base));
+  color: rgb(var(--foreground));
+  /* shadow-soft كان @apply → نحطه كخاصية */
+  box-shadow: var(--shadow-soft);
+  /* backdrop-blur-2xl */
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  transition: all 0.2s ease;
+}
+.dark .surface {
+  border-color: rgb(var(--border) / 0.4);
+  background-color: color-mix(in srgb, rgb(var(--base)) 70%, transparent);
 }
 
-@layer components {
-  .surface {
-    @apply relative overflow-hidden rounded-[calc(var(--radius-lg))] border border-border/60 bg-card/90 p-6 text-foreground shadow-soft backdrop-blur-2xl transition dark:border-border/40 dark:bg-card/70;
-  }
-
-  .surface::before {
-    content: "";
-    position: absolute;
-    inset: -45% -35% auto;
-    height: 70%;
-    background: radial-gradient(circle at top, rgb(var(--primary) / 0.22), transparent 65%);
-    opacity: 0.75;
-    pointer-events: none;
-  }
-
-  .surface-muted {
-    @apply rounded-[calc(var(--radius-md))] border border-border/60 bg-muted/70 px-5 py-4 text-sm text-muted-foreground shadow-[0_18px_55px_-45px_rgba(86,47,16,0.28)] backdrop-blur-xl transition dark:border-border/40 dark:bg-muted/30 dark:text-foreground;
-  }
-
-  .tag {
-    @apply inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/70 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-muted-foreground shadow-sm transition-colors hover:border-border hover:text-foreground dark:border-border/40 dark:bg-muted/30 dark:text-muted-foreground;
-  }
-
-  .chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/80 px-3 py-1 text-xs font-medium text-foreground/70 shadow-sm backdrop-blur-md transition hover:border-border hover:text-foreground dark:border-border/40 dark:bg-muted/30 dark:text-foreground/80;
-  }
-
-  .frosted {
-    @apply border border-border/45 bg-card/80 backdrop-blur-xl dark:border-border/40 dark:bg-card/40;
-  }
+.surface::before {
+  content: "";
+  position: absolute;
+  inset: -45% -35% auto;
+  height: 70%;
+  background: radial-gradient(
+    circle at top,
+    rgb(var(--primary) / 0.22),
+    transparent 65%
+  );
+  opacity: 0.75;
+  pointer-events: none;
 }
 
-@layer utilities {
-  .mask-fade-b {
-    mask-image: linear-gradient(to bottom, black 45%, transparent 100%);
-  }
-
-  .mask-fade-t {
-    mask-image: linear-gradient(to top, black 45%, transparent 100%);
-  }
-
-  .bg-dawn-ripple {
-    background:
-      radial-gradient(90% 120% at 15% 10%, rgb(var(--primary) / 0.18), transparent 70%),
-      radial-gradient(120% 110% at 85% 15%, rgb(var(--secondary) / 0.14), transparent 62%),
-      rgb(var(--background));
-  }
-
-  .bg-dusk-ripple {
-    background:
-      radial-gradient(120% 120% at 20% 90%, rgb(var(--accent) / 0.18), transparent 70%),
-      radial-gradient(100% 120% at 80% 70%, rgb(var(--primary) / 0.16), transparent 65%),
-      rgb(var(--background));
-  }
+.surface-muted {
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(var(--border) / 0.6);
+  background-color: rgb(var(--muted) / 0.7);
+  padding: 1rem 1.25rem; /* px-5 py-4 */
+  font-size: 0.875rem; /* text-sm */
+  color: rgb(var(--muted-foreground));
+  /* shadow-[...] كان @apply → نحطه كخاصية */
+  box-shadow: 0 18px 55px -45px rgba(86, 47, 16, 0.28);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  transition: all 0.2s ease;
+}
+.dark .surface-muted {
+  border-color: rgb(var(--border) / 0.4);
+  background-color: rgb(var(--muted) / 0.3);
+  color: rgb(var(--foreground));
 }
 
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--border) / 0.6);
+  background-color: rgb(var(--muted) / 0.7);
+  padding: 0.25rem 1rem; /* px-4 py-1 */
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  color: rgb(var(--muted-foreground));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+.tag:hover {
+  border-color: rgb(var(--border));
+  color: rgb(var(--foreground));
+}
+.dark .tag {
+  border-color: rgb(var(--border) / 0.4);
+  background-color: rgb(var(--muted) / 0.3);
+  color: rgb(var(--muted-foreground));
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--border) / 0.5);
+  background-color: color-mix(in srgb, rgb(var(--base)) 80%, transparent);
+  padding: 0.25rem 0.75rem; /* px-3 py-1 */
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in srgb, rgb(var(--foreground)) 70%, transparent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+.chip:hover {
+  border-color: rgb(var(--border));
+  color: rgb(var(--foreground));
+}
+.dark .chip {
+  border-color: rgb(var(--border) / 0.4);
+  background-color: rgb(var(--muted) / 0.3);
+  color: rgb(var(--foreground) / 0.8);
+}
+
+.frosted {
+  border: 1px solid rgb(var(--border) / 0.45);
+  background-color: color-mix(in srgb, rgb(var(--base)) 80%, transparent);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+.dark .frosted {
+  border-color: rgb(var(--border) / 0.4);
+  background-color: rgb(var(--base) / 0.4);
+}
+
+/* ============ Utilities ============ */
+.mask-fade-b {
+  mask-image: linear-gradient(to bottom, black 45%, transparent 100%);
+}
+.mask-fade-t {
+  mask-image: linear-gradient(to top, black 45%, transparent 100%);
+}
+
+.bg-dawn-ripple {
+  background:
+    radial-gradient(
+      90% 120% at 15% 10%,
+      rgb(var(--primary) / 0.18),
+      transparent 70%
+    ),
+    radial-gradient(
+      120% 110% at 85% 15%,
+      rgb(var(--secondary) / 0.14),
+      transparent 62%
+    ),
+    rgb(var(--background));
+}
+.bg-dusk-ripple {
+  background:
+    radial-gradient(
+      120% 120% at 20% 90%,
+      rgb(var(--accent) / 0.18),
+      transparent 70%
+    ),
+    radial-gradient(
+      100% 120% at 80% 70%,
+      rgb(var(--primary) / 0.16),
+      transparent 65%
+    ),
+    rgb(var(--background));
+}
+
+/* ============ Animations ============ */
 @keyframes aurora {
   0% {
     transform: translate3d(-8%, -4%, 0) rotate(0deg) scale(1.05);
@@ -301,7 +417,6 @@ html[lang="ar"] body {
     transform: translate3d(-6%, -2%, 0) rotate(-1deg) scale(1.04);
   }
 }
-
 @keyframes softPulse {
   0%,
   100% {

@@ -1,3 +1,4 @@
+// apps/web/src/app/api/chat/route.ts
 import OpenAI from "openai";
 
 export const runtime = "nodejs";
@@ -17,11 +18,19 @@ type IncomingMessage = {
 };
 
 type RequestBody = {
-  messages?: IncomingMessage[];
-  lang?: string;
+  messages?: Array<{ role?: unknown; content?: unknown }>;
+  lang?: "ar" | "en";
   intent?: string;
   context?: Record<string, unknown>;
 };
+
+function coerceRole(input: unknown): Role {
+  return input === "assistant"
+    ? "assistant"
+    : input === "system"
+      ? "system"
+      : "user";
+}
 
 export async function POST(req: Request) {
   if (!openai) {
@@ -40,15 +49,18 @@ export async function POST(req: Request) {
     return new Response("No messages provided", { status: 400 });
   }
 
+  // تطبيع صارم للرسائل + تحديد النوع
   const normalized: IncomingMessage[] = incoming
-    .map((message) => ({
-      role: message.role === "assistant" ? "assistant" : message.role === "system" ? "system" : "user",
-      content: typeof message.content === "string" ? message.content : "",
-    }))
-    .filter((message) => message.content.trim().length > 0)
+    .map(
+      (m): IncomingMessage => ({
+        role: coerceRole(m?.role),
+        content: typeof m?.content === "string" ? m.content : "",
+      })
+    )
+    .filter((m) => m.content.trim().length > 0)
     .slice(-12);
 
-  if (!normalized.some((message) => message.role === "system")) {
+  if (!normalized.some((m) => m.role === "system")) {
     normalized.unshift({
       role: "system",
       content:
@@ -60,13 +72,13 @@ export async function POST(req: Request) {
 
   if (body.context && typeof body.context === "object") {
     const contextText = Object.entries(body.context)
-      .map(([key, value]) => {
-        if (value == null) return `${key}: —`;
-        if (typeof value === "string") return `${key}: ${value}`;
+      .map(([k, v]) => {
+        if (v == null) return `${k}: —`;
+        if (typeof v === "string") return `${k}: ${v}`;
         try {
-          return `${key}: ${JSON.stringify(value)}`;
+          return `${k}: ${JSON.stringify(v)}`;
         } catch {
-          return `${key}: ${String(value)}`;
+          return `${k}: ${String(v)}`;
         }
       })
       .join("\n");
@@ -89,17 +101,10 @@ export async function POST(req: Request) {
 
     const stream = new ReadableStream<Uint8Array>({
       async pull(controller) {
-        try {
-          const { value, done } = await iterator.next();
-          if (done) {
-            controller.close();
-            return;
-          }
-          const chunk = value.choices?.[0]?.delta?.content;
-          if (chunk) controller.enqueue(encoder.encode(chunk));
-        } catch (error) {
-          controller.error(error);
-        }
+        const { value, done } = await iterator.next();
+        if (done) return controller.close();
+        const chunk = value.choices?.[0]?.delta?.content;
+        if (chunk) controller.enqueue(encoder.encode(chunk));
       },
       async cancel() {
         await iterator.return?.();
@@ -116,7 +121,9 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("/api/chat error", error);
     const message =
-      typeof error?.message === "string" ? error.message : "Failed to generate response";
+      typeof error?.message === "string"
+        ? error.message
+        : "Failed to generate response";
     return new Response(message, { status: 500 });
   }
 }
