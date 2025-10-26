@@ -1,7 +1,11 @@
-// apps/web/src/app/page.tsx
+"use client";
+
 import AIConsole from "@/components/AIConsole";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
+  const router = useRouter();
+
   return (
     <div className="mx-auto max-w-5xl space-y-10">
       <header className="relative overflow-hidden rounded-[2.5rem] border border-border/60 bg-card/85 px-8 py-12 text-center shadow-soft backdrop-blur dark:border-border/40 dark:bg-card/50">
@@ -15,10 +19,21 @@ export default function HomePage() {
         <p className="mx-auto mt-3 max-w-2xl text-sm text-foreground/60 sm:text-base">
           اكتب متطلبات الوظيفة، أرفق CV، واضغط «حلّل الآن» لمشاهدة النتيجة التفصيلية. كل خطوة مصممة لتمنحك رؤية فورية ودقيقة عبر واجهة سلسة وعالية الحرفية.
         </p>
+
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-[11px] uppercase tracking-[0.3em] text-foreground/50">
           <span className="tag bg-primary/15 text-primary">Realtime Scoring</span>
           <span className="tag">Arabic • English</span>
           <span className="tag">Private & Secure</span>
+        </div>
+
+        {/* الزر الجديد */}
+        <div className="mt-8">
+          <button
+            onClick={() => router.push("/batch-analysis")}
+            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-6 py-3 text-sm font-semibold text-white shadow-md hover:opacity-90 transition-all duration-200"
+          >
+            🔎 تحليل مجموعة CVs
+          </button>
         </div>
       </header>
 
